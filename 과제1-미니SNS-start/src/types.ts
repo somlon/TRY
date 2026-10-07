@@ -13,7 +13,7 @@ export interface User {
 //   - 허용 값은 "draft" 와 "published" 두 가지뿐이다.
 //   - 단순 string으로 두지 말 것(오타가 컴파일 단계에서 걸리지 않는다).
 //   - [설명] 주석 한 줄로 왜 리터럴 유니언을 썼는지 근거를 남겨라.
-// [설명] 허용 값이 "draft"·"published" 둘뿐이므로 string 대신 리터럴 유니언으로 값의 집합 자체를 타입으로 정해, "publised" 같은 오타를 실행 전(tsc --noEmit)에 컴파일 오류로 잡는다.
+// [설명] 상태는 "draft"·"published" 두 값뿐이라 리터럴 유니언으로 허용 값을 제한한다. string이면 "publised" 같은 오타도 통과하지만, 유니언은 실행 전에 tsc가 오류로 잡아 준다.
 export type PostStatus = "draft" | "published";
 
 // TODO 2: 게시글 형태를 interface로 정의하라. 아래 속성을 포함한다.
