@@ -10,7 +10,7 @@ import type { Post, PostInput, PostStatus, Stats } from "./types.js";
 // TODO 3: 배열의 첫 요소를 반환하는 제네릭 함수.
 //   - 빈 배열 가능성을 반환 타입에 명시하라(T | undefined).
 //   - [설명] 주석 한 줄로 반환 타입을 그렇게 정한 이유를 남겨라.
-// [설명] 빈 배열이면 arr[0]이 undefined이므로 반환 타입을 T | undefined로 명시함. 그래서 사용하는 쪽에서 ?.나 ??로 값이 없는 경우를 처리해야 함.
+// [설명] 빈 배열이면 arr[0]이 undefined이므로 반환 타입을 T | undefined로 명시한다. 그래서 사용하는 쪽에서 ?.나 ??로 값이 없는 경우를 처리해야 한다.
 export function first<T>(arr: T[]): T | undefined {
   return arr[0];
 }
