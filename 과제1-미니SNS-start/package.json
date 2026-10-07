@@ -1,0 +1,16 @@
+{
+  "name": "assignment1-mini-sns",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "고급웹프로그래밍 과제 1 — 파일 기반 미니 SNS 콘솔 애플리케이션",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
