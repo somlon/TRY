@@ -34,13 +34,9 @@ published 개수: 3
 
 | 타입 | 설계 이유 |
 |---|---|
-| `PostStatus` | `"draft" \| "published"` 리터럴 유니언으로 허용 값을 제한해 오타를 실행 전에 잡는다. 유니언이라 `type`으로 선언했다. |
-| `Post` | 객체 구조라 `interface`로 선언하고, 작성자는 `author: User`로 중첩했다. |
-| `PostInput` | `id`·`createdAt`은 시스템이 만들기 때문에 빼고, `status`는 생략할 수 있게(`?`) 했다. |
-| `Stats` | 집계 결과의 형태를 고정해 `countByStatus`의 반환 타입으로 쓴다. |
-| `first<T>` | 제네릭이라 어떤 배열에도 쓸 수 있고, 빈 배열이면 `undefined`이므로 `T \| undefined`를 반환한다. |
-
-`any`는 쓰지 않았다. `JSON.parse`의 반환은 `any`이므로 `as Post[]`로 타입을 지정했다.
+| `User` | 사용자 객체 `{ id, name, email? }`는 `Post`·`PostInput`의 작성자, `main.ts`의 `me`처럼 여러 곳에서 반복되므로 `interface`로 이름을 붙여 한 번만 정의하고 재사용한다. `email`은 없을 수도 있어 옵셔널(`?`)로 두었다. |
+| `PostStatus` | 상태는 `"draft"`·`"published"` 두 값뿐이라 리터럴 유니언으로 허용 값의 집합 자체를 타입으로 정했다. `string`이면 `"publised"` 같은 오타도 통과해 `listByStatus`가 조용히 0개를 반환하는 버그가 실행 중에야 드러나지만, 리터럴 유니언은 `tsc`가 실행 전에 오류로 잡는다. 유니언이라 `type`으로 선언했다. |
+| `Post` | 객체 구조라 `interface`로 정의했다. 게시글은 작성자를 "가지고 있는" 관계이므로 `author`를 `User`로 중첩했다(게시글이 사용자"인" 것은 아니므로 `extends`가 아니다). 그래서 작성자 형태를 `User` 한 곳에서 관리하고, 시드 JSON의 `"author": { "id": 10, "name": "이수진" }` 구조와도 맞으며, `post.author.name` 같은 접근도 타입 검사를 받는다. |
 
 ## 3. 함수 설명
 
