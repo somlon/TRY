@@ -60,11 +60,11 @@ published 개수: 3
 ### 오류 1
 
 ```
-error TS2688: Cannot find type definition file for 'node'.
+src/store.ts(16,21): error TS2345: Argument of type 'Promise<string>' is not assignable to parameter of type 'string'.
 ```
 
-- 원인: `npm install` 전이라 `tsconfig.json`의 `"types": ["node"]`가 가리키는 `@types/node`가 없었다.
-- 해결: 프로젝트 폴더에서 `npm install`을 실행해 devDependencies를 설치하면 해결된다.
+- 원인: `loadPosts`에서 `const text = readFile(path, "utf8");`처럼 `await`를 빠뜨렸다. `readFile`은 `Promise<string>`을 반환하므로 `text`가 문자열이 아닌 Promise가 되어, 문자열을 받는 `JSON.parse(text)`에서 오류가 났다.
+- 해결: `const text = await readFile(path, "utf8");`로 `await`를 붙여 Promise 안의 문자열을 꺼내자 오류가 사라졌다.
 
 ### 오류 2
 
@@ -88,6 +88,15 @@ error TS2345: Argument of type '"publised"' is not assignable to parameter of ty
 ## 5. AI 활용 보고
 
 - 도구: Claude Code
-- 사용 부분: TODO 1~9 코드 구현, 타입 검사·실행 결과 검증, README 초안과 지정 주석 문구 작성
-- 방식: 과제 PDF와 강의록 1~5강을 주고, 강의에 나온 개념과 방식만 사용하도록 조건을 걸었다.
+- 방식: 과제 PDF, 스타터 코드, 강의록 1~5강 PDF를 주고 "강의에 나온 개념과 방식만 사용"하도록 조건을 걸었다. 결과를 읽어 보고 고칠 점을 다시 요청하는 식으로 진행했다.
+
+| 사용 부분 | AI가 한 일 |
+|---|---|
+| 과제 이해 | 과제 PDF와 스타터 코드의 구조, TODO별 요구사항, 기대 출력이 나오는 이유를 설명했다. |
+| 코드 구현 (TODO 1~9) | `types.ts`의 `PostStatus` 유니언과 `Post` interface, `service.ts`의 `first`·`addPost`·`listByStatus`·`findByTag`·`countByStatus`(내부 함수 `hasTag` 포함), `store.ts`의 `loadPosts`·`savePosts`를 작성했다. 강의록에 없는 `filter`·`includes`·스프레드 대신 강의에서 다룬 `for...of`와 `push`를 썼다. |
+| 검증 | `tsc --noEmit` 오류 0개를 확인하고, `main.ts` 실행 결과를 과제 PDF의 기대 출력과 비교했다. 원본 불변, id 최댓값 + 1, 빈 배열, 저장 후 다시 읽기, 상태 값 오타 검출도 따로 확인했다. |
+| 지정 주석 | `[설명]` 주석 3곳을 작성했고, 요청에 따라 강의록 근거로 간결하게 줄인 뒤 어미를 "~한다" 문장형으로 고쳤다. |
+| README | 초안을 작성했고, 요청에 따라 요구 항목 중심으로 줄이고, 타입 설계 이유(`User`·`PostStatus`·`Post`)를 보강하고, 오류 기록과 이 보고를 수정했다. |
+| GitHub | 변경을 커밋하고 PR을 만들었다. 머지는 직접 했다. |
+
 - 본인 확인:
