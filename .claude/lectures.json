@@ -1,0 +1,95 @@
+{
+  "note": "강의록 원본은 저장소와 외부 서비스에 올리지 않는다(CLAUDE.md 규칙 7). 이 목록은 새 세션이 원본 보유 여부를 확인하고, 없으면 이전 세션이나 사용자에게 요청하는 데 쓴다.",
+  "lectures": [
+    {
+      "no": "01",
+      "title": "노드 입문 및 프로젝트 시작",
+      "type": "pdf",
+      "pages": 29,
+      "size": 1465822,
+      "sha256": "9119706650ec995462f8e6c03abcfece04e5a0b8e98c62c4d20376816532c091",
+      "topics": "ESM import/export · 상대경로 .js 확장자 · npm/package.json"
+    },
+    {
+      "no": "02",
+      "title": "TypeScript 기초 I",
+      "type": "pdf",
+      "pages": 32,
+      "size": 2238252,
+      "sha256": "52859c2de1b98b3988649691de81bbc2f8e1962bfc3124edf2b2423b9fac23fc",
+      "topics": "strict · any 금지 · 함수 매개변수/반환 타입 · ?. ??"
+    },
+    {
+      "no": "03",
+      "title": "비동기 JavaScript와 TypeScript",
+      "type": "pdf",
+      "pages": 35,
+      "size": 2027950,
+      "sha256": "515210b1a9bd2cbc8e0454a89bf105e655dfd2774c1a4d351cd85b0a5444d513",
+      "topics": "Promise<T> · async/await · catch(error: unknown)"
+    },
+    {
+      "no": "04",
+      "title": "TypeScript 기초 II",
+      "type": "pdf",
+      "pages": 32,
+      "size": 2126439,
+      "sha256": "90b0a371c54f59c7b941bc609a79cd4e15436d9c45f6cb8fad2f157439f08b00",
+      "topics": "interface/type · 리터럴 유니언 · typeof 좁히기 · unknown"
+    },
+    {
+      "no": "05",
+      "title": "Node.js 프로젝트 관리와 내장 기능",
+      "type": "pdf",
+      "pages": 33,
+      "size": 2906016,
+      "sha256": "eff7c7edbd06d4d57057ac9b31fc18990480e4d322daf57983232a13f1ddbab0",
+      "topics": "npm scripts · process.env · path · fs/promises · JSON 파일"
+    },
+    {
+      "no": "06",
+      "title": "기본 HTTP 서버",
+      "type": "pptx",
+      "pages": 27,
+      "size": 546273,
+      "sha256": "8e6d40fe40824ca9e18d6a12841d96c91f0180350ecbdd0ac45680dfb35ed26a",
+      "topics": "요청/응답 · 상태 코드 · res.statusCode · REST"
+    },
+    {
+      "no": "07",
+      "title": "Express 시작",
+      "type": "pdf",
+      "pages": 41,
+      "size": 4044812,
+      "sha256": "3142cf8912fa4d26eb82931455576e5425d2b652d687cd0e54cc1c1faaef7992",
+      "topics": "라우팅 · req/res · Request 제네릭 · 선언 순서 · JSON body"
+    },
+    {
+      "no": "08",
+      "title": "미들웨어와 에러 처리",
+      "type": "pdf",
+      "pages": 42,
+      "size": 1664140,
+      "sha256": "187188bf3926f484adf66881be151ae70556c88a0b524e315f1981eff6e7403a",
+      "topics": "미들웨어 순서 · morgan/static/json · res.on('finish') · 404 · 에러 핸들러"
+    },
+    {
+      "no": "09",
+      "title": "Express 서버 구조화 — Router · Controller 분리",
+      "type": "pdf",
+      "pages": 33,
+      "size": 1380513,
+      "sha256": "9d023a527c974699c8df0764c302c93ca231de8a35629c07241676246296fbfc",
+      "topics": "Router · RequestHandler · Controller · Store · req.originalUrl"
+    },
+    {
+      "no": "10",
+      "title": "Express 상태 관리 — 쿠키와 세션",
+      "type": "pdf",
+      "pages": 36,
+      "size": 1544034,
+      "sha256": "cdefaab5e7a7ccd51689a22e38f39c12e52821c3d04fb907fb0ddd0fcc1fd756",
+      "topics": "쿠키 · 세션 (과제 2에는 적용하지 않음)"
+    }
+  ]
+}
