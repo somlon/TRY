@@ -1,121 +1,90 @@
 # 과제 2 — 독서 기록 REST API 서버
 
-> 이 README는 **제출물의 일부(20%)** 입니다. 모든 항목을 본인의 언어로 작성해 주세요.
-> 코드를 복사만 하고 이해하지 못하면 이 문서를 작성하기 어렵습니다.
+- 이름: 김세창
+- 학번: 60221303
 
-- 이름:
-- 학번:
-
----
+도서 정보를 JSON 파일에 저장하고 조회 · 등록 · 수정 · 삭제 · 통계 기능을 제공하는 REST API 서버를 Express 5 + TypeScript로 구현했다.
 
 ## 1. 실행 방법
 
-`package.json`이 있는 이 폴더에서 실행한다. 포트와 데이터 파일 경로는 `.env`(`PORT`, `DATA_FILE`)에서 읽는다.
-
 ```bash
-npm install     # 의존성 설치 (express · morgan, 개발 도구 typescript · tsx · @types/*)
-npm run check   # tsc --noEmit — JS를 만들지 않고 타입 검사만 수행 (오류 0개 확인)
-npm run dev     # tsx watch로 서버 실행 → http://localhost:3000
-npm run reset   # data/books.seed.json을 data/books.json으로 복사해 초기 데이터로 되돌림
+npm install
+npm run check
+npm run dev
+npm run reset
 ```
-
-요청 확인은 `requests.http`를 VS Code REST Client로 실행한다. 기대 결과(id 28 등)가 맞으려면 `npm run reset` 직후 1번부터 순서대로 실행한다.
 
 ## 2. 구조 · 동작 설명
 
-요청은 `app.ts` → `routes/bookRouter.ts` → `controllers/bookController.ts` → `store.ts` → `jsonFile.ts` 순서로 전달되고, 응답은 미들웨어 또는 Controller가 보낸다.
+**Q1.** `requestTimer`를 app.ts에 `app.use`로 장착한 경우와 bookRouter에 `router.use`로 장착한 경우, `GET /users` 요청의 콘솔 로그는 어떻게 달라지는가?
 
-**Q1.** `requestTimer`를 app.ts에 `app.use`로 장착한 경우와 bookRouter에 `router.use`로 장착한 경우, `GET /users` 요청의 콘솔 로그는 어떻게 달라지는가? 그 이유를 장착 위치와 요청 경로로 설명하시오.
+| 장착 위치 | `GET /users` 콘솔 로그 | 이유 |
+|---|---|---|
+| bookRouter `router.use(requestTimer)` (현재 코드) | `GET /users 404 0.412 ms - 31` (morgan만) | `app.use('/books', bookRouter)`로 장착했으므로 `/books`로 시작하는 요청만 bookRouter에 들어가고, `/users`는 bookRouter를 거치지 않고 `notFound`가 응답한다. |
+| app.ts `app.use(requestTimer)` | 위 줄 + `[time] GET /users 404 3ms` | 경로 없는 `app.use`는 모든 요청에 실행되므로 `/users`도 requestTimer를 지난다. (직접 실행해 확인) |
 
-- **bookRouter에 장착(현재 코드)** — `GET /users`는 morgan 로그만 남고 `[time]` 로그는 남지 않는다.
-  ```
-  GET /users 404 0.412 ms - 31
-  ```
-  `app.ts`에서 Router를 `app.use('/books', bookRouter)`로 장착했으므로 경로가 `/books`로 시작하는 요청만 bookRouter로 들어간다. `requestTimer`는 bookRouter 안의 `router.use(requestTimer)`에 있으므로 bookRouter에 들어온 요청에만 실행된다. `/users`는 bookRouter를 거치지 않고 `app.use(notFound)`가 404로 응답하므로 `res.on('finish', …)` 리스너가 등록되지 않는다.
-- **app.ts에 `app.use(requestTimer)`로 장착한 경우** — 경로 없이 `app.use`로 장착한 미들웨어는 모든 요청에 실행된다. `GET /users`도 requestTimer를 지나며 리스너를 등록하고, notFound가 404를 보낸 뒤 `[time]` 줄이 추가로 찍힌다. 별도 포트에서 이렇게 장착한 앱으로 직접 확인한 로그:
-  ```
-  GET /users 404 1.562 ms - 31
-  [time] GET /users 404 3ms
-  ```
-- 같은 이유로, 잘못된 JSON 본문을 보낸 `POST /books`(requests.http 18번)도 `[time]` 로그가 없다. `app.ts`의 `express.json()`이 bookRouter보다 먼저 실행되어 본문 해석에 실패하면 Router에 들어가기 전에 바로 errorHandler로 가기 때문이다.
-
-**Q2.** `POST /books`에서 400 · 409, `GET /books/:id`에서 400 · 404는 각각 어느 모듈(미들웨어 · Controller · Store)에서 결정되는가? Store가 상태 코드를 정하지 않도록 구성한 이유는 무엇인가?
+**Q2.** `POST /books`의 400 · 409, `GET /books/:id`의 400 · 404는 어느 모듈에서 결정되는가? Store가 상태 코드를 정하지 않는 이유는?
 
 | 요청 | 상태 코드 | 결정하는 곳 | 근거 코드 |
 |---|---|---|---|
-| `POST /books` | 400 (입력 오류) | Controller `create` | `toRequiredText` · `isReadingStatus` · `isRatingValue` · `isRatingAllowed` 검사 후 `res.status(400)` |
-| `POST /books` | 400 (JSON 문법 오류) | 미들웨어 `errorHandler` | `express.json()`이 넘긴 `SyntaxError`를 `err instanceof SyntaxError`로 구분 |
-| `POST /books` | 409 | Controller `create` | `await store.exists(title, author)`가 `true`를 반환하면 `res.status(409)` |
-| `GET /books/:id` | 400 | 미들웨어 `validateId` | `Number.isInteger(id)`가 아니거나 `id < 1`이면 응답하고 `return` → Controller는 실행되지 않음 |
-| `GET /books/:id` | 404 | Controller `getById` | `store.findById`가 `undefined`를 반환하면 `res.status(404)` |
+| `POST /books` | 400 | Controller `create` | 입력 검증 보조 함수(`toRequiredText` · `isRatingValue` · `isRatingAllowed`)가 실패하면 400 |
+| `POST /books` | 400 (잘못된 JSON 본문) | 미들웨어 `errorHandler` | `err instanceof SyntaxError`이면 400 |
+| `POST /books` | 409 | Controller `create` | `await store.exists(title, author)`가 `true`면 409 |
+| `GET /books/:id` | 400 | 미들웨어 `validateId` | `Number.isInteger(id)`가 아니거나 `id < 1`이면 400, Controller는 실행되지 않음 |
+| `GET /books/:id` | 404 | Controller `getById` | `store.findById`가 `undefined`면 404 |
 
-- Store는 `exists`가 `boolean`, `findById`가 `Book | undefined`처럼 **데이터와 결과만 반환**하고, 그 결과를 몇 번 상태 코드로 바꿀지는 Controller가 정한다(`store.ts` 첫 주석: "HTTP를 알지 못한다").
-- 이렇게 나눈 이유
-  - 역할 분리 — Store는 데이터 조회 · 저장 · 삭제만, Controller는 요청 해석 · 검증 · 응답 결정만 맡아 각 파일이 하나의 일만 한다.
-  - 교체 가능성 — 나중에 JSON 파일을 데이터베이스로 바꿔도 Store 함수의 이름과 반환값만 같으면 Controller는 고칠 필요가 없다.
-  - 재사용 — 같은 결과라도 요청에 따라 의미가 다르다. 예를 들어 `findById`의 `undefined`는 GET에서는 404이지만, 다른 기능에서는 오류가 아닐 수 있다. Store가 상태 코드를 정하면 이런 판단을 할 수 없다.
+Store는 데이터 · `undefined` · `boolean`만 반환하고, 이를 상태 코드로 바꾸는 일은 Controller가 맡는다. 역할을 나누면 Store는 데이터 처리만 하게 되고, 나중에 JSON 파일을 데이터베이스로 바꿔도 Store 함수의 이름과 반환값만 같으면 Controller를 고칠 필요가 없다.
 
-**Q3.** `data/books.json`의 내용이 손상되어 JSON 형식이 아니면, 핸들러에 try/catch가 없는데도 500 응답이 전송된다. 오류가 발생한 위치부터 응답이 전송될 때까지의 과정을 설명하시오. (`jsonFile.ts`가 오류를 바꾸어 던지는 이유도 포함)
+**Q3.** `data/books.json`이 손상되면 try/catch가 없는데도 500 응답이 전송되는 과정은? (`jsonFile.ts`가 오류를 바꾸어 던지는 이유 포함)
 
-`data/books.json`을 `{ broken`으로 바꾸고 `GET /books`를 보내 직접 확인했다 → `500 {"message":"데이터 파일 형식 오류: data/books.json"}`.
+1. `jsonFile.ts`의 `readJson`에서 `JSON.parse`가 `SyntaxError`를 던지고, `readJson`이 이를 `new Error('데이터 파일 형식 오류: …')`로 바꿔 다시 던진다.
+2. `readJson` → `readBooks` → `store.findAll` → Controller `list`가 `await`로 연결되어 있어 오류가 Promise 거부로 `list`까지 전달된다.
+3. Express 5는 async 핸들러의 거부된 Promise를 자동으로 에러 핸들러에 넘긴다. 그래서 try/catch 없이 `app.ts` 맨 마지막의 `errorHandler`로 이동한다.
+4. `errorHandler`가 `console.error`로 기록하고, `SyntaxError`가 아니므로 `500 { message }`를 보낸다.
 
-1. **오류 발생** — `jsonFile.ts`의 `readJson`에서 `readFile`은 성공하지만 `JSON.parse(text)`가 `SyntaxError`를 던진다. `readJson`은 이를 `catch`로 받아 `new Error('데이터 파일 형식 오류: …')`로 바꿔 다시 던진다.
-2. **Promise 거부 전달** — `readJson` → `readBooks` → `store.findAll` → Controller `list`가 모두 `async` 함수이고 `await`로 연결되어 있으므로, 던진 오류는 각 함수가 반환한 Promise의 reject로 바깥까지 전달된다. 결국 `list`가 반환한 Promise가 거부된다.
-3. **Express 5의 자동 전달** — Express 5는 async 핸들러가 반환한 Promise가 거부되면 그 오류를 `next(err)`로 넘긴 것처럼 처리한다. 그래서 `list`에 try/catch가 없어도 일반 미들웨어(`notFound`)를 건너뛰고, `app.ts` 맨 마지막에 등록한 4개 매개변수 미들웨어 `errorHandler`로 이동한다.
-4. **응답 전송** — `errorHandler`는 응답이 아직 시작되지 않았으므로(`res.headersSent`가 false) `console.error(err)`로 서버 콘솔에 기록한다. `err instanceof SyntaxError`가 아니므로 `500 { message: err.message }`를 보낸다.
+`errorHandler`는 `SyntaxError`를 클라이언트의 잘못된 JSON 본문(400)으로 판단한다. 데이터 파일의 `SyntaxError`를 그대로 던지면 서버 문제가 클라이언트 잘못(400)으로 분류되므로, `jsonFile.ts`가 일반 `Error`로 바꿔 500으로 처리되게 한다.
 
-**`jsonFile.ts`가 오류를 바꾸어 던지는 이유** — `errorHandler`는 `SyntaxError`를 "클라이언트가 보낸 JSON 본문이 잘못됨(400)"으로 판단한다. 데이터 파일의 `SyntaxError`를 그대로 던지면, 서버 자신의 데이터 문제인데도 클라이언트 잘못(400)으로 잘못 분류된다. 일반 `Error`로 바꾸면 서버 오류(500)로 처리된다.
+## 3. 오류 기록
 
-## 3. 겪은 오류와 해결 (최소 2건)
+### 오류 1
 
-- **오류 1 — 한글 검색어 요청 실패 (요청 중)**
-  - 메시지
-    ```
-    UnicodeEncodeError: 'ascii' codec can't encode character '김' in position 31: ordinal not in range(128)
-    ```
-  - 상황: requests.http 1~19를 순서대로 자동 실행하는 점검용 Python 스크립트로 3번 `GET /books?status=done&keyword=김`을 보낼 때 발생했다. 1 · 2번은 정상 응답했다.
-  - 원인: URL의 한글 `김`을 퍼센트 인코딩하지 않고 그대로 보냈다. HTTP 요청 줄에는 ASCII 문자만 들어갈 수 있다. 서버 코드의 문제가 아니라 요청을 보내는 쪽의 문제였다.
-  - 해결: 요청을 보내기 전에 URL을 퍼센트 인코딩하도록 스크립트를 고쳤다(`김` → `%EA%B9%80`). 그 뒤 3번이 `200 · 3권`으로 응답했다. REST Client는 이 인코딩을 자동으로 한다. 서버의 `[time]` 로그에도 `GET /books?status=done&keyword=%EA%B9%80`처럼 인코딩된 원래 URL(`req.originalUrl`)이 찍힌다.
-- **오류 2 — 데이터 파일 손상 (Q3 확인을 위해 의도적으로 재현)**
-  - 메시지
-    ```
-    Error: 데이터 파일 형식 오류: data/books.json
-        at readJson (/home/user/TRY/과제2-reading-log/src/jsonFile.ts:15:11)
-    ```
-    응답: `500 {"message":"데이터 파일 형식 오류: data/books.json"}`
-  - 원인: `data/books.json`이 JSON 형식이 아니어서 `JSON.parse`가 실패했다. `jsonFile.ts`가 이를 일반 `Error`로 바꿔 던졌고, `errorHandler`가 500으로 응답했다.
-  - 해결: `npm run reset`으로 `data/books.seed.json`을 복사해 데이터 파일을 복구했다. 그 뒤 `GET /books`가 다시 200으로 응답했다.
+```
+UnicodeEncodeError: 'ascii' codec can't encode character '\uae40' in position 31: ordinal not in range(128)
+```
+
+- 원인: requests.http를 자동 실행하는 점검용 스크립트로 3번 `GET /books?status=done&keyword=김`을 보낼 때, 한글 `김`을 퍼센트 인코딩하지 않아 요청 줄에 ASCII가 아닌 문자가 들어갔다.
+- 해결: URL을 퍼센트 인코딩(`김` → `%EA%B9%80`)하도록 고치자 3번이 `200 · 3권`으로 응답했다. REST Client는 이 인코딩을 자동으로 한다.
+
+### 오류 2
+
+```
+Error: 데이터 파일 형식 오류: data/books.json
+    at readJson (/home/user/TRY/과제2-reading-log/src/jsonFile.ts:15:11)
+```
+
+- 원인: Q3 확인을 위해 `data/books.json`을 일부러 JSON이 아닌 내용으로 바꿨다. `JSON.parse`가 실패해 `500 {"message":"데이터 파일 형식 오류: data/books.json"}`이 응답됐다.
+- 해결: `npm run reset`으로 `data/books.seed.json`을 복사해 복구하자 `GET /books`가 다시 200으로 응답했다.
 
 ## 4. AI 활용 보고
 
-- 도구: Claude Code (웹 클라우드 환경)
-- 방식: 과제 PDF, 스타터 코드(zip), 강의록 1~10강(6강은 PPTX)을 주고 조건을 걸었다. 결과를 읽어 보고 고칠 점을 다시 요청하는 식으로 진행했다.
-  - 과제 요구사항과 강의록 방식을 반드시 지킬 것
-  - 값을 하드코딩하지 말 것
-  - 강의록에 없는 부분은 대학생 수준의 단순한 방법으로 구현할 것
+Claude Code를 다음 부분에 사용했다.
 
-| 사용 부분 | AI가 한 일 |
-|---|---|
-| 과제 이해 | 과제 PDF와 스타터 코드의 구조, 요청 처리 흐름(app → Router → Controller → Store), API 명세, TODO별 요구사항, 평가 기준을 설명했다. 과제 요구사항과 강의록 구현 방식을 체크리스트로 정리했다. 강의록에 근거가 없는 항목(응답 전송 시작 여부 판별, 409의 의미)을 찾아 알렸다. |
-| 코드 구현 (TODO 1~16) | 작성한 코드: `app.ts`의 미들웨어 등록 순서, `validateId` · `requestTimer` · `errorHandler`, `bookRouter`의 endpoint 연결, `store.ts`의 `findAll` · `exists` · `create` · `update` · `remove` · `countByStatus`, `bookController.ts`의 `list` · `create` · `update` · `remove` · `stats`와 보조 함수(`toRequiredText` · `isRatingValue` · `isRatingAllowed`). 강의에서 다룬 `find` · `filter` · `findIndex` · `splice` · `reduce`, `typeof` 검사를 썼다. 강의록에 없는 부분은 단순한 방법만 썼다: `res.headersSent` 검사(Express 공식 문서 Error Handling 참고), `toLowerCase`를 이용한 대소문자 무시 검색. |
-| 검증 | `npm run check` 오류 0개를 확인했다. `requests.http`를 순서대로 자동 실행하는 점검용 Python 스크립트를 만들어, `npm run reset` 직후 1~19의 상태 코드 · 권수 · id · 필드 값을 기대 결과와 비교했다(오류 기록 1이 이 과정에서 생겼다). `[time]` 로그 형식, `GET /users`에 `[time]`이 없는 것, 재시작 후 데이터 유지, 데이터 파일 손상 시 500, 경계값 30여 건도 따로 확인했다. |
-| 지정 주석 | `[설명]` 주석 3곳(`bookRouter`의 `/stats` 선언 순서, `bookController` update의 별점 규칙 위치, `store` create의 await 저장 근거)을 작성했다. |
-| 추가 시나리오 | `requests.http` 20~26번(id 0, 별점 6 · 5 · 1 경계, 수정 후 상태 기준 별점 규칙, 수정 필드 없음, keyword 배열)을 작성했다. 1~26 전체 실행으로 기대 결과를 확인했다. |
-| README | 실행 방법, Q1~Q3, 오류 기록, 테스트 시나리오 표, 이 보고의 초안을 작성했다. Q1의 "app.ts에 장착한 경우" 로그는 별도 포트의 임시 앱으로 직접 실행해 확인했다. 오류 기록 2는 Q3 확인을 위해 의도적으로 재현한 오류다. 이 보고는 요청에 따라 과제 1 README의 형식을 참고해 다시 작성했다. |
-| GitHub | 과제 자료를 `main`과 분리된 브랜치에 올렸다. 변경을 커밋 · 푸시했다. |
-
-- 본인 확인:
+1. 코드 구현: TODO 1~16과 지정 주석 3곳을 작성했다. 강의록에 없는 `res.headersSent` 검사와 `toLowerCase`는 단순한 방법으로 사용했다.
+2. 검증: `npm run check` 오류 0개를 확인하고, `npm run reset` 직후 `requests.http` 1~19의 결과를 기대 결과와 비교했다. `[time]` 로그 형식, 재시작 후 데이터 유지, 데이터 파일 손상 시 500, 경계값도 따로 확인했다.
+3. 추가 시나리오: `requests.http` 20~26번(경계값 · 규칙 위반)을 작성했다.
+4. README: 초안 작성 후, 요구 항목 중심으로 줄였다.
+5. GitHub: 변경을 커밋 · 푸시했다.
 
 ## 5. 테스트 시나리오 설명
 
-`requests.http`의 20~26번이다. `npm run reset` 후 1번부터 순서대로 실행하는 것을 기준으로 한다.
+`requests.http` 20~26번. `npm run reset` 후 1번부터 순서대로 실행한다.
 
 | 번호 | 요청 | 확인하는 규칙 | 기대 결과 |
 |---|---|---|---|
-| 20 | `GET /books/0` | id 경계값 — `validateId`는 1 이상의 정수만 통과 | 400 · `{ "message": "잘못된 id" }` |
-| 21 | `POST /books` `{ title: "모순", author: "양귀자", status: "done", rating: 6 }` | 별점 범위 밖(최댓값 5 초과) | 400 · rating 범위 안내 메시지 |
-| 22 | `POST /books` 같은 도서를 `rating: 5`로 | 별점 최댓값 5는 허용, 완독 도서만 별점 가능 | 201 · id 28 · status done · rating 5 |
-| 23 | `PATCH /books/2` `{ rating: 1 }` | 별점 최솟값 1은 허용 (2번은 완독 도서) | 200 · rating 1 |
-| 24 | `PATCH /books/2` `{ status: "reading", rating: 3 }` | 별점 규칙은 **수정 후 상태** 기준 — 완독에서 읽는 중으로 바뀌면 별점 불가 | 400 · 별점은 완독 도서만 가능 |
-| 25 | `PATCH /books/2` `{ title: "제목 변경" }` | 수정 가능한 필드(status · rating · memo)가 하나도 없음 | 400 · 수정할 값 필요 안내 |
-| 26 | `GET /books?keyword=code&keyword=java` | 같은 이름의 query가 배열로 도착하면 문자열이 아님 | 400 · keyword 형식 안내 |
+| 20 | `GET /books/0` | id 경계값 (1 이상의 정수만 허용) | 400 |
+| 21 | `POST /books` 완독 · `rating: 6` | 별점 범위 밖 | 400 |
+| 22 | `POST /books` 완독 · `rating: 5` | 별점 최댓값 허용 | 201 · id 28 · rating 5 |
+| 23 | `PATCH /books/2` `{ rating: 1 }` | 별점 최솟값 허용 (완독 도서) | 200 · rating 1 |
+| 24 | `PATCH /books/2` `{ status: "reading", rating: 3 }` | 수정 후 상태가 완독이 아니면 별점 불가 | 400 |
+| 25 | `PATCH /books/2` `{ title: "제목 변경" }` | 수정 가능한 필드(status · rating · memo) 없음 | 400 |
+| 26 | `GET /books?keyword=code&keyword=java` | keyword가 배열로 도착하면 문자열이 아님 | 400 |

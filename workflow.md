@@ -45,6 +45,11 @@
   - `README.md` 전 항목 작성 (이름 · 학번 비워 둠, AI 활용 보고의 "본인 확인"은 사용자 작성용으로 비워 둠)
   - 강의록 밖에서 쓴 것: `res.headersSent`(Express 공식 문서 Error Handling), `toLowerCase`
 - README "4. AI 활용 보고"를 과제 1 README(`main` 브랜치) 형식에 맞춰 다시 작성: 도구 · 방식 + "사용 부분 | AI가 한 일" 표 + 빈 "본인 확인"
+- README 전체를 사용자가 준 과제 1 최종 README 형식으로 간결하게 다시 씀
+  - 이름 · 학번은 사용자가 준 과제 1 README의 값으로 기입 (소스 파일 상단 `// 이름 / 학번` 주석은 아직 비어 있음)
+  - Q1 · Q2는 표, Q3는 4단계, 오류 기록은 `### 오류 N` + 원문 + 원인 · 해결 형식
+  - AI 활용 보고는 번호 목록. 사용자는 과제 이해 · 코드 구현 · 지정 주석 항목 삭제를 요청함. 과제 이해만 삭제하고 코드 구현 · 지정 주석은 한 줄로 합쳐 남김 (과제 PDF가 "사용 부분과 방식을 정직하게 기술"을 요구하므로) — 최종 판단은 사용자에게 맡김
+  - 오류 1 원문의 `'김'`이 파일에 쓸 때 `'김'`으로 바뀌어 있던 것을 원래 표기로 복구 (README · workflow.md)
 
 ### 현재 상태
 - 구현 완료. `npm run check` 오류 0개, `any` 0개, 남은 TODO 예외 0개
@@ -68,4 +73,4 @@
 - 강의록 1~10강을 모두 받음(6강만 PPTX). 원본은 이 세션의 업로드 폴더에만 있고 저장소에는 없음
 - 1~10강에도 근거가 없는 항목: errorHandler에서 응답이 이미 시작됐는지 판별하는 방법(→ `res.headersSent`로 구현), 409의 의미 설명 (CLAUDE.md 5-4)
 - `npm install`은 `package-lock.json`의 morgan 표기를 `^1.12.1`로 자동 수정함 — 과제 요구가 아니어서 되돌림(설치 결과에는 영향 없음)
-- 실제로 만난 오류 원문: 점검 스크립트의 `UnicodeEncodeError: 'ascii' codec can't encode character '김' …` (한글 URL 미인코딩 → 퍼센트 인코딩으로 해결, README 오류 1)
+- 실제로 만난 오류 원문: 점검 스크립트의 `UnicodeEncodeError: 'ascii' codec can't encode character '\uae40' …` (한글 URL 미인코딩 → 퍼센트 인코딩으로 해결, README 오류 1)
