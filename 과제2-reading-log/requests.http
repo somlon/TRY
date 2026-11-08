@@ -87,4 +87,41 @@ GET {{baseUrl}}/users
 ### 제공되지 않은 요청을 3개 이상 작성하고, 각 요청 위에
 ### "### 번호. 확인 내용 → 기대 결과" 형식으로 기대 결과를 적는다.
 ### README 5번 표와 내용을 일치시킨다.
+### (npm run reset 후 1번부터 순서대로 실행하는 것을 기준으로 함)
+
+### 20. id 경계값 0 (1 이상의 정수가 아님) → 400
+GET {{baseUrl}}/books/0
+
+### 21. 별점 범위 밖 6으로 완독 도서 등록 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "모순", "author": "양귀자", "status": "done", "rating": 6 }
+
+### 22. 별점 최댓값 5로 완독 도서 등록 → 201 · id 28 · status done · rating 5
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "모순", "author": "양귀자", "status": "done", "rating": 5 }
+
+### 23. 완독 도서의 별점을 최솟값 1로 수정 → 200 · rating 1
+PATCH {{baseUrl}}/books/2
+Content-Type: application/json
+
+{ "rating": 1 }
+
+### 24. 완독 도서를 읽는 중으로 바꾸면서 별점 전송 (수정 후 상태 기준) → 400
+PATCH {{baseUrl}}/books/2
+Content-Type: application/json
+
+{ "status": "reading", "rating": 3 }
+
+### 25. 수정할 수 없는 필드(title)만 전송 → 400
+PATCH {{baseUrl}}/books/2
+Content-Type: application/json
+
+{ "title": "제목 변경" }
+
+### 26. 같은 이름의 keyword를 두 번 전송 (배열로 도착) → 400
+GET {{baseUrl}}/books?keyword=code&keyword=java
 

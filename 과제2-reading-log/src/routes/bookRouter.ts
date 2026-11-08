@@ -19,6 +19,14 @@ const router = Router();
 //   - :id가 있는 endpoint에는 validateId를 적용한다.
 //   - [설명] 주석 한 줄로 GET /books/stats를 GET /books/:id보다 먼저
 //     선언해야 하는 이유를 남겨라.
+router.use(requestTimer);
 
+router.get('/', book.list);
+// [설명] 라우트는 선언 순서대로 검사하므로 /:id가 먼저 있으면 'stats'를 id로 받아 validateId가 400으로 응답한다.
+router.get('/stats', book.stats);
+router.get('/:id', validateId, book.getById);
+router.post('/', book.create);
+router.patch('/:id', validateId, book.update);
+router.delete('/:id', validateId, book.remove);
 
 export default router;

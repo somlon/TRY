@@ -8,5 +8,10 @@ import type { IdParams } from '../types.js';
 //     예) abc · 0 · -3 · 1.5 → 400
 //   - 올바르면 다음 단계(Controller)로 진행한다.
 export const validateId: RequestHandler<IdParams> = (req, res, next) => {
-  throw new Error('TODO 2: validateId를 구현하세요');
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ message: '잘못된 id' });
+    return;
+  }
+  next();
 };

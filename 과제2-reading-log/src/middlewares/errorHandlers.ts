@@ -14,6 +14,20 @@ export const notFound: RequestHandler = (req, res) => {
 //   - 잘못된 JSON 본문으로 발생한 오류는 400, 그 밖의 오류는 500으로 응답한다.
 //   - 응답 형식은 다른 오류 응답과 같은 { message } JSON으로 통일한다.
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  // 응답을 이미 보내기 시작했으면 더 쓸 수 없으므로 Express 기본 처리기에 넘김
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
   console.error(err);
-  res.status(500).json({ message: 'TODO 4: errorHandler를 구현하세요' });
+
+  // express.json()이 본문을 해석하지 못하면 SyntaxError가 전달됨 → 클라이언트 잘못(400)
+  if (err instanceof SyntaxError) {
+    res.status(400).json({ message: '잘못된 JSON 본문' });
+    return;
+  }
+
+  const message = err instanceof Error ? err.message : '알 수 없는 오류';
+  res.status(500).json({ message });
 };

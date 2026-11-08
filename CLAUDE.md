@@ -87,6 +87,7 @@
 2. **강의록** — 1~10강(목록: `.claude/lectures.json`). 원본은 저장소에 없다(규칙 7). 5-3의 요약을 기준으로 삼고, 원문 확인이 필요하면 규칙 7에 따라 확보한다.
 3. **둘이 다르면 과제를 따른다.** 예: 9강의 메모리 배열 · 동기 Store → 과제는 파일 기반 async Store / 9강의 Controller 안 `parseId` → 과제는 `validateId` 미들웨어 / 8강의 전역 처리 시간 미들웨어 → 과제는 bookRouter에만 장착 / 8강의 `express.urlencoded` → 과제 app.ts에는 넣지 않음.
 4. **두 자료 어디에도 근거가 없는 방법은 임의로 쓰지 않는다.** 사용자에게 상황을 설명하고 출처(공식 문서 주소 등)를 밝혀 확인받은 뒤 사용한다. 알려진 항목은 5-4에 있다.
+   - 사용자 지시: 강의록에 나오지 않는 실력적인 부분은 **대학생 수준**의 단순한 방법으로 구현한다(고급 문법 · 라이브러리 · 복잡한 패턴을 쓰지 않는다).
 5. **과제에 없는 것은 추가하지 않는다.** 기능 · 동작 · 의존성 모두 해당한다. 예: 10강의 cookie-parser · express-session · config.ts, memo 공백 제거, 대소문자를 무시하는 중복 검사, 새 npm 패키지. 제공된 함수 이름 · export · 시그니처도 바꾸지 않는다.
 
 ### 5-2. 과제 요구사항 체크리스트
@@ -284,7 +285,7 @@
 
 | 항목 | 상황 |
 |---|---|
-| errorHandler: 응답 전송이 이미 시작됐는지 판별하는 방법 | 1~10강 어디에도 없음. 사용자가 승인하기 전에는 쓰지 않는다. 사용자가 확인할 출처: Express 공식 문서 Error Handling(https://expressjs.com/en/guide/error-handling.html) |
+| errorHandler: 응답 전송이 이미 시작됐는지 판별하는 방법 | 1~10강 어디에도 없음. 사용자 지시("강의에 없는 부분은 대학생 수준으로 구현")에 따라 `if (res.headersSent) { next(err); return; }` 한 줄로 구현함. 출처: Express 공식 문서 Error Handling(https://expressjs.com/en/guide/error-handling.html) |
 | 409 Conflict의 의미 | 과제 PDF가 상태 코드를 지정하므로 구현한다. 의미 설명은 1~10강에 없음(6강의 4xx 예시는 400 · 401 · 403 · 404). README에서 설명할 때는 과제 PDF를 근거로 든다 |
 
 근거를 찾은 항목 (1~10강을 모두 받은 뒤 확인함)

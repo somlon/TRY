@@ -26,7 +26,21 @@ async function writeBooks(books: Book[]): Promise<void> {
 //   - 두 조건이 함께 오면 두 조건을 모두 만족하는 도서만 남긴다.
 //   - 조건이 없으면 전체 도서를 반환한다. 순서는 파일에 저장된 순서 그대로 둔다.
 export async function findAll(options: ListOptions): Promise<Book[]> {
-  throw new Error('TODO 6: findAll을 구현하세요');
+  let books = await readBooks();
+
+  if (options.status !== undefined) {
+    const status = options.status;
+    books = books.filter((b) => b.status === status);
+  }
+
+  if (options.keyword !== undefined) {
+    const keyword = options.keyword.toLowerCase();
+    books = books.filter((b) =>
+      b.title.toLowerCase().includes(keyword) ||
+      b.author.toLowerCase().includes(keyword));
+  }
+
+  return books;
 }
 
 // [제공 예시] 단건 조회 — 찾지 못하면 undefined (수정 불필요)
@@ -38,7 +52,9 @@ export async function findById(id: number): Promise<Book | undefined> {
 
 // TODO 7: 제목과 저자가 모두 같은 도서가 이미 있으면 true, 없으면 false를 반환하라.
 export async function exists(title: string, author: string): Promise<boolean> {
-  throw new Error('TODO 7: exists를 구현하세요');
+  const books = await readBooks();
+  const found = books.find((b) => b.title === title && b.author === author);
+  return found !== undefined;
 }
 
 // TODO 8: 새 도서를 등록하고, 저장한 도서를 반환하라.
@@ -46,7 +62,25 @@ export async function exists(title: string, author: string): Promise<boolean> {
 //   - createdAt = 현재 시각 (new Date().toISOString())
 //   - [설명] 주석 한 줄로 파일 저장을 await로 기다린 뒤 반환하는 이유를 남겨라.
 export async function create(input: NewBook): Promise<Book> {
-  throw new Error('TODO 8: create를 구현하세요');
+  const books = await readBooks();
+
+  // 기존 id 중 가장 큰 값 + 1 (도서가 없으면 0 + 1 = 1)
+  const maxId = books.reduce((max, b) => (b.id > max ? b.id : max), 0);
+
+  const book: Book = {
+    id: maxId + 1,
+    title: input.title,
+    author: input.author,
+    status: input.status,
+    rating: input.rating,
+    memo: input.memo,
+    createdAt: new Date().toISOString(),
+  };
+  books.push(book);
+
+  // [설명] 저장이 끝나기 전에 반환하면 201 응답 뒤 저장이 실패하거나 다음 요청이 저장 전 파일을 읽을 수 있어 await로 기다린다.
+  await writeBooks(books);
+  return book;
 }
 
 // TODO 9: 도서를 부분 수정하고, 수정한 도서를 반환하라. 대상이 없으면 undefined.
@@ -55,15 +89,40 @@ export async function create(input: NewBook): Promise<Book> {
 export async function update(
   id: number, changes: BookChanges,
 ): Promise<Book | undefined> {
-  throw new Error('TODO 9: update를 구현하세요');
+  const books = await readBooks();
+  const book = books.find((b) => b.id === id);
+  if (!book) return undefined;
+
+  const wasDone = book.status === 'done';
+
+  if (changes.status !== undefined) book.status = changes.status;
+  if (changes.rating !== undefined) book.rating = changes.rating;
+  if (changes.memo !== undefined) book.memo = changes.memo;
+
+  // 완독에서 다른 상태로 바뀌면 별점 삭제
+  if (wasDone && book.status !== 'done') book.rating = null;
+
+  await writeBooks(books);
+  return book;
 }
 
 // TODO 10: 도서를 삭제하라. 삭제했으면 true, 대상이 없으면 false.
 export async function remove(id: number): Promise<boolean> {
-  throw new Error('TODO 10: remove를 구현하세요');
+  const books = await readBooks();
+  const index = books.findIndex((b) => b.id === id);
+  if (index === -1) return false;
+
+  books.splice(index, 1);
+  await writeBooks(books);
+  return true;
 }
 
 // TODO 11: 상태별 도서 수(want · reading · done)와 전체 도서 수(total)를 반환하라.
 export async function countByStatus(): Promise<BookStats> {
-  throw new Error('TODO 11: countByStatus를 구현하세요');
+  const books = await readBooks();
+  const stats: BookStats = { want: 0, reading: 0, done: 0, total: books.length };
+  for (const b of books) {
+    stats[b.status] += 1;
+  }
+  return stats;
 }

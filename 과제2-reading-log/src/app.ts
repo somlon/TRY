@@ -22,7 +22,12 @@ const PORT = Number(process.env.PORT ?? 3000);
 //   - bookRouter를 '/books' 경로에 장착
 //   - notFound (404)
 //   - errorHandler (에러 처리)
-
+app.use(morgan('dev'));
+app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.json());
+app.use('/books', bookRouter);
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}에서 대기 중`);

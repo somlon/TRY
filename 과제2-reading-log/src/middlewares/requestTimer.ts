@@ -10,5 +10,11 @@ import type { RequestHandler } from 'express';
 //   - 전체경로는 장착 경로(/books)와 query string을 포함한 원래 요청 URL이다.
 //   - /books로 시작하지 않는 요청(예: GET /users)은 기록되지 않아야 한다.
 export const requestTimer: RequestHandler = (req, res, next) => {
-  throw new Error('TODO 3: requestTimer를 구현하세요');
+  const startedAt = Date.now();
+  // 응답 전송이 끝난 시점에 처리 시간을 계산해 출력
+  res.on('finish', () => {
+    const ms = Date.now() - startedAt;
+    console.log(`[time] ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms`);
+  });
+  next();
 };
