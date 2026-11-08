@@ -39,22 +39,32 @@
   - `.claude/scripts/lectures.sh`: `check` · `path` · `text` / `.claude/scripts/pptx_text.py`: PPTX 텍스트 추출
   - `.claude/settings.json`: SessionStart(`startup|resume`) 훅이 `lectures.sh check` 실행
   - 점검: 보유 10/10 · 업로드 없음 0/10 · 강의 하나당 텍스트 최대 약 35KB(메시지 한도 64KB 이내)
+- 과제 구현 (커밋 `23e3caf`) — 사용자 지시: 강의록에 없는 부분은 대학생 수준으로
+  - TODO 1~16 전부 구현, 지정 주석 `// [설명]` 3곳(bookRouter · bookController update · store create)
+  - `requests.http` 추가 시나리오 20~26 (id 0, 별점 6 · 5 · 1 경계, 수정 후 상태 기준 별점 규칙, 수정 필드 없음, keyword 배열)
+  - `README.md` 전 항목 작성 (이름 · 학번 비워 둠, AI 활용 보고의 "본인 확인"은 사용자 작성용으로 비워 둠)
+  - 강의록 밖에서 쓴 것: `res.headersSent`(Express 공식 문서 Error Handling), `toLowerCase`
 
 ### 현재 상태
-- TODO 1~16은 모두 미구현 (스타터 그대로)
-- `npm install`, `npm run check`는 아직 실행하지 않음
+- 구현 완료. `npm run check` 오류 0개, `any` 0개, 남은 TODO 예외 0개
+- 요청 검증 (점검 스크립트로 `npm run reset` 직후 1번부터 순서대로 실행)
+  - `requests.http` 1~26 상태 코드 전부 일치, 권수 · id 28 · 필드 값도 기대 결과와 일치
+  - `[time]` 로그 형식 일치, `GET /users`는 `[time]` 없이 morgan 로그만 남음
+  - 재시작 후 데이터 유지 확인, 데이터 파일 손상 시 500 `{ message }` 확인
+  - 추가 경계값 30여 건(id 0 · -3 · 1.5, rating 0 · 6 · 3.5 · "5", 공백 제목, Content-Type 누락, 409 공백 무시 등) 기대대로 동작
+- 수정 금지 파일(`types.ts` · `jsonFile.ts` · `public/index.html` · `notFound`)과 `package.json` · `package-lock.json` · `.env` 변경 없음
+- `data/books.json`은 `npm run reset`으로 초기 상태
 
-### 다음 할 일 (사용자가 구현을 지시하면)
-0. 강의록 원본 확인(규칙 7) 후, CLAUDE.md 5-4의 남은 항목(errorHandler의 응답 시작 여부 판별 방법)을 사용자에게 확인
-1. `cd 과제2-reading-log && npm install && npm run check`
-2. TODO를 번호 순서대로 구현: app.ts(1) → validateId(2) → requestTimer(3) → errorHandler(4) → bookRouter(5) → store(6~11) → bookController(12~16)
-3. 지정 `// [설명]` 주석 3곳 작성: `/stats` 선언 순서(bookRouter), 별점 규칙을 Controller에서 검사하는 이유(update), create의 await 저장 근거(store)
-4. `npm run dev` 후 `requests.http` 1~19번을 curl로 확인, 추가 시나리오 3개 이상 작성
-5. README.md 작성 (Q1~Q3, 오류 기록 2건, AI 활용 보고, 테스트 시나리오 표) — 이름 · 학번은 사용자가 기입
-6. `npm run reset`으로 `data/books.json` 원복 후 커밋 · 푸시
+### 다음 할 일 (사용자 작업)
+1. `README.md`와 소스 파일 상단 주석의 이름 · 학번 기입
+2. README를 직접 읽고 본인 언어로 다듬기, "AI 활용 보고"의 본인 확인 항목 작성
+3. README 오류 2는 의도적으로 재현한 오류임 — 직접 실행하며 만난 오류가 있으면 교체
+4. 제출: node_modules를 뺀 `과제2-reading-log/` 폴더 전체를 압축 (`npm run reset` 상태 확인)
 
 ### 결정 사항 · 주의점
 - 시드 데이터는 25권, id 9 · 17이 비어 있고 최댓값이 27 → 새 도서 id는 "개수 + 1"이 아니라 "최댓값 + 1"(28)이어야 함
 - 수정 금지 제공 파일: `types.ts`, `jsonFile.ts`, `public/index.html`, `notFound`
 - 강의록 1~10강을 모두 받음(6강만 PPTX). 원본은 이 세션의 업로드 폴더에만 있고 저장소에는 없음
-- 1~10강에도 근거가 없는 항목: errorHandler에서 응답이 이미 시작됐는지 판별하는 방법, 409의 의미 설명 (CLAUDE.md 5-4)
+- 1~10강에도 근거가 없는 항목: errorHandler에서 응답이 이미 시작됐는지 판별하는 방법(→ `res.headersSent`로 구현), 409의 의미 설명 (CLAUDE.md 5-4)
+- `npm install`은 `package-lock.json`의 morgan 표기를 `^1.12.1`로 자동 수정함 — 과제 요구가 아니어서 되돌림(설치 결과에는 영향 없음)
+- 실제로 만난 오류 원문: 점검 스크립트의 `UnicodeEncodeError: 'ascii' codec can't encode character '김' …` (한글 URL 미인코딩 → 퍼센트 인코딩으로 해결, README 오류 1)
