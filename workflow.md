@@ -44,6 +44,7 @@
   - `requests.http` 추가 시나리오 20~26 (id 0, 별점 6 · 5 · 1 경계, 수정 후 상태 기준 별점 규칙, 수정 필드 없음, keyword 배열)
   - `README.md` 전 항목 작성 (이름 · 학번 비워 둠, AI 활용 보고의 "본인 확인"은 사용자 작성용으로 비워 둠)
   - 강의록 밖에서 쓴 것: `res.headersSent`(Express 공식 문서 Error Handling), `toLowerCase`
+- README "4. AI 활용 보고"를 과제 1 README(`main` 브랜치) 형식에 맞춰 다시 작성: 도구 · 방식 + "사용 부분 | AI가 한 일" 표 + 빈 "본인 확인"
 
 ### 현재 상태
 - 구현 완료. `npm run check` 오류 0개, `any` 0개, 남은 TODO 예외 0개

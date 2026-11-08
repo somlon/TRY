@@ -88,14 +88,23 @@ npm run reset   # data/books.seed.json을 data/books.json으로 복사해 초기
 
 ## 4. AI 활용 보고
 
-- **사용 도구**: Claude Code(Anthropic). 웹 클라우드 환경에서 사용했다.
-- **사용 부분과 방식**
-  - 과제 PDF · 스타터 코드 · 강의록(1~10강)을 읽게 하고, 과제 요구사항과 강의록 구현 방식을 체크리스트로 정리하게 했다.
-  - TODO 1~16의 코드와 지정 주석 3곳(`// [설명]`)을 작성하게 했다. 강의록에 나온 방법을 우선 쓰도록 지시했다. 강의록에 없는 부분은 단순한 방법만 쓰게 했다.
-    - `errorHandler`의 `res.headersSent` 검사: Express 공식 문서 Error Handling 참고
-    - `toLowerCase`를 이용한 대소문자 무시 검색
-  - `npm run check`와 requests.http 1~19 자동 실행으로 기대 결과를 검증하게 했다. 경계값 점검, 추가 시나리오(20~26), 이 README 초안 작성도 맡겼다.
-- **본인 확인**: (작성자가 직접 코드를 읽고 실행해 확인 · 이해한 내용을 적을 것)
+- 도구: Claude Code (웹 클라우드 환경)
+- 방식: 과제 PDF, 스타터 코드(zip), 강의록 1~10강(6강은 PPTX)을 주고 조건을 걸었다. 결과를 읽어 보고 고칠 점을 다시 요청하는 식으로 진행했다.
+  - 과제 요구사항과 강의록 방식을 반드시 지킬 것
+  - 값을 하드코딩하지 말 것
+  - 강의록에 없는 부분은 대학생 수준의 단순한 방법으로 구현할 것
+
+| 사용 부분 | AI가 한 일 |
+|---|---|
+| 과제 이해 | 과제 PDF와 스타터 코드의 구조, 요청 처리 흐름(app → Router → Controller → Store), API 명세, TODO별 요구사항, 평가 기준을 설명했다. 과제 요구사항과 강의록 구현 방식을 체크리스트로 정리했다. 강의록에 근거가 없는 항목(응답 전송 시작 여부 판별, 409의 의미)을 찾아 알렸다. |
+| 코드 구현 (TODO 1~16) | 작성한 코드: `app.ts`의 미들웨어 등록 순서, `validateId` · `requestTimer` · `errorHandler`, `bookRouter`의 endpoint 연결, `store.ts`의 `findAll` · `exists` · `create` · `update` · `remove` · `countByStatus`, `bookController.ts`의 `list` · `create` · `update` · `remove` · `stats`와 보조 함수(`toRequiredText` · `isRatingValue` · `isRatingAllowed`). 강의에서 다룬 `find` · `filter` · `findIndex` · `splice` · `reduce`, `typeof` 검사를 썼다. 강의록에 없는 부분은 단순한 방법만 썼다: `res.headersSent` 검사(Express 공식 문서 Error Handling 참고), `toLowerCase`를 이용한 대소문자 무시 검색. |
+| 검증 | `npm run check` 오류 0개를 확인했다. `requests.http`를 순서대로 자동 실행하는 점검용 Python 스크립트를 만들어, `npm run reset` 직후 1~19의 상태 코드 · 권수 · id · 필드 값을 기대 결과와 비교했다(오류 기록 1이 이 과정에서 생겼다). `[time]` 로그 형식, `GET /users`에 `[time]`이 없는 것, 재시작 후 데이터 유지, 데이터 파일 손상 시 500, 경계값 30여 건도 따로 확인했다. |
+| 지정 주석 | `[설명]` 주석 3곳(`bookRouter`의 `/stats` 선언 순서, `bookController` update의 별점 규칙 위치, `store` create의 await 저장 근거)을 작성했다. |
+| 추가 시나리오 | `requests.http` 20~26번(id 0, 별점 6 · 5 · 1 경계, 수정 후 상태 기준 별점 규칙, 수정 필드 없음, keyword 배열)을 작성했다. 1~26 전체 실행으로 기대 결과를 확인했다. |
+| README | 실행 방법, Q1~Q3, 오류 기록, 테스트 시나리오 표, 이 보고의 초안을 작성했다. Q1의 "app.ts에 장착한 경우" 로그는 별도 포트의 임시 앱으로 직접 실행해 확인했다. 오류 기록 2는 Q3 확인을 위해 의도적으로 재현한 오류다. 이 보고는 요청에 따라 과제 1 README의 형식을 참고해 다시 작성했다. |
+| GitHub | 과제 자료를 `main`과 분리된 브랜치에 올렸다. 변경을 커밋 · 푸시했다. |
+
+- 본인 확인:
 
 ## 5. 테스트 시나리오 설명
 
