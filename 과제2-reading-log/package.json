@@ -1,0 +1,24 @@
+{
+  "name": "assignment2-reading-log",
+  "version": "1.0.0",
+  "description": "고급웹프로그래밍 과제 2 — 독서 기록 REST API 서버",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/app.ts",
+    "check": "tsc --noEmit",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/app.js",
+    "reset": "node -e \"require('node:fs').copyFileSync('data/books.seed.json', 'data/books.json')\""
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "morgan": "^1.12.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

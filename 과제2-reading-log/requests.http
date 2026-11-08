@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:3000
+
+### ── 조회 ──────────────────────────────────────────
+### 1. 전체 목록 → 200 · 25권
+GET {{baseUrl}}/books
+
+### 2. 상태 조건 → 200 · 9권 (모두 want)
+GET {{baseUrl}}/books?status=want
+
+### 3. 상태 + 검색어 → 200 · 3권 (살인자의 기억법 · 우리가 빛의 속도로 갈 수 없다면 · 불편한 편의점)
+GET {{baseUrl}}/books?status=done&keyword=김
+
+### 4. 검색어 (영문 대소문자 구분 없음) → 200 · 1권 (Clean Code)
+GET {{baseUrl}}/books?keyword=code
+
+### 5. 잘못된 status → 400
+GET {{baseUrl}}/books?status=finish
+
+### 6. 통계 → 200 · want 9 · reading 8 · done 8 · total 25
+GET {{baseUrl}}/books/stats
+
+### 7. 단건 조회 → 200
+GET {{baseUrl}}/books/1
+
+### 8. 잘못된 id → 400
+GET {{baseUrl}}/books/abc
+
+### 9. 없는 id → 404
+GET {{baseUrl}}/books/99
+
+### ── 등록 · 수정 · 삭제 ─────────────────────────────
+### 10. 등록 → 201 · id 28 · status want · rating null · memo ""
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "자바 ORM 표준 JPA 프로그래밍", "author": "김영한" }
+
+### 11. 필수값 누락 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "저자 없는 책" }
+
+### 12. 완독이 아닌 도서에 별점 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "새 책", "author": "홍길동", "rating": 4 }
+
+### 13. 이미 등록된 도서 → 409
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "소년이 온다", "author": "한강" }
+
+### 14. 완독으로 변경 + 별점 → 200 · status done · rating 5
+PATCH {{baseUrl}}/books/28
+Content-Type: application/json
+
+{ "status": "done", "rating": 5 }
+
+### 15. 읽는 중인 도서에 별점 → 400
+PATCH {{baseUrl}}/books/3
+Content-Type: application/json
+
+{ "rating": 4 }
+
+### 16. 완독 → 읽는 중 → 200 · rating null
+PATCH {{baseUrl}}/books/1
+Content-Type: application/json
+
+{ "status": "reading" }
+
+### 17. 삭제 → 204
+DELETE {{baseUrl}}/books/28
+
+### 18. 잘못된 JSON 본문 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "따옴표 누락, }
+
+### 19. 등록되지 않은 경로 → 404
+GET {{baseUrl}}/users
+
+### ── 추가 시나리오 (직접 작성) ──────────────────────
+### 제공되지 않은 요청을 3개 이상 작성하고, 각 요청 위에
+### "### 번호. 확인 내용 → 기대 결과" 형식으로 기대 결과를 적는다.
+### README 5번 표와 내용을 일치시킨다.
+

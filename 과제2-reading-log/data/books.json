@@ -1,0 +1,227 @@
+[
+  {
+    "id": 1,
+    "title": "소년이 온다",
+    "author": "한강",
+    "status": "done",
+    "rating": 5,
+    "memo": "5·18을 다룬 소설",
+    "createdAt": "2026-03-02T09:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "채식주의자",
+    "author": "한강",
+    "status": "done",
+    "rating": 4,
+    "memo": "",
+    "createdAt": "2026-03-05T09:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "작별하지 않는다",
+    "author": "한강",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-04-11T09:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "title": "흰",
+    "author": "한강",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-03-15T09:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "title": "Clean Code",
+    "author": "Robert C. Martin",
+    "status": "done",
+    "rating": null,
+    "memo": "함수는 한 가지 일만",
+    "createdAt": "2026-03-08T09:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "title": "The Pragmatic Programmer",
+    "author": "David Thomas",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-04-20T09:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "title": "Refactoring",
+    "author": "Martin Fowler",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-03-27T09:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "title": "살인자의 기억법",
+    "author": "김영하",
+    "status": "done",
+    "rating": 3,
+    "memo": "",
+    "createdAt": "2026-03-11T09:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "title": "작별인사",
+    "author": "김영하",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-05-02T09:00:00.000Z"
+  },
+  {
+    "id": 11,
+    "title": "우리가 빛의 속도로 갈 수 없다면",
+    "author": "김초엽",
+    "status": "done",
+    "rating": 5,
+    "memo": "SF 단편집",
+    "createdAt": "2026-04-03T09:00:00.000Z"
+  },
+  {
+    "id": 12,
+    "title": "지구 끝의 온실",
+    "author": "김초엽",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-05-14T09:00:00.000Z"
+  },
+  {
+    "id": 13,
+    "title": "김약국의 딸들",
+    "author": "박경리",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-04-07T09:00:00.000Z"
+  },
+  {
+    "id": 14,
+    "title": "토지 1",
+    "author": "박경리",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-05-20T09:00:00.000Z"
+  },
+  {
+    "id": 15,
+    "title": "아몬드",
+    "author": "손원평",
+    "status": "done",
+    "rating": 4,
+    "memo": "",
+    "createdAt": "2026-04-15T09:00:00.000Z"
+  },
+  {
+    "id": 16,
+    "title": "불편한 편의점",
+    "author": "김호연",
+    "status": "done",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-03-18T09:00:00.000Z"
+  },
+  {
+    "id": 18,
+    "title": "달러구트 꿈 백화점",
+    "author": "이미예",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-06-01T09:00:00.000Z"
+  },
+  {
+    "id": 19,
+    "title": "모던 자바스크립트 Deep Dive",
+    "author": "이웅모",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-03-23T09:00:00.000Z"
+  },
+  {
+    "id": 20,
+    "title": "Node.js 교과서",
+    "author": "조현영",
+    "status": "reading",
+    "rating": null,
+    "memo": "Express 복습용",
+    "createdAt": "2026-06-09T09:00:00.000Z"
+  },
+  {
+    "id": 21,
+    "title": "이것이 자바다",
+    "author": "신용권",
+    "status": "done",
+    "rating": 4,
+    "memo": "",
+    "createdAt": "2026-05-09T09:00:00.000Z"
+  },
+  {
+    "id": 22,
+    "title": "쉽게 배우는 운영체제",
+    "author": "조성호",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-06-15T09:00:00.000Z"
+  },
+  {
+    "id": 23,
+    "title": "데미안",
+    "author": "헤르만 헤세",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-04-28T09:00:00.000Z"
+  },
+  {
+    "id": 24,
+    "title": "어린 왕자",
+    "author": "생텍쥐페리",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-06-22T09:00:00.000Z"
+  },
+  {
+    "id": 25,
+    "title": "Effective TypeScript",
+    "author": "Dan Vanderkam",
+    "status": "reading",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-05-26T09:00:00.000Z"
+  },
+  {
+    "id": 26,
+    "title": "코스모스",
+    "author": "칼 세이건",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-07-01T09:00:00.000Z"
+  },
+  {
+    "id": 27,
+    "title": "사피엔스",
+    "author": "유발 하라리",
+    "status": "want",
+    "rating": null,
+    "memo": "",
+    "createdAt": "2026-06-27T09:00:00.000Z"
+  }
+]
