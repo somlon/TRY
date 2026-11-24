@@ -149,3 +149,30 @@ GET {{baseUrl}}/users
 ### 제공되지 않은 요청을 3개 이상 작성하고, 각 요청 위에
 ### "### 번호. 확인 내용 → 기대 결과" 형식으로 기대 결과를 적는다.
 ### README 5번 표와 내용을 일치시킨다.
+
+### 33. 별점 최댓값 초과(6) → 400 (1~5 정수만 허용)
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "별점 범위 확인", "author": "테스트", "status": "done", "rating": 6 }
+
+### 34. 별점 최솟값(1) + 완독으로 등록 → 201 · status done · rating 1 · tags []
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "별점 범위 확인", "author": "테스트", "status": "done", "rating": 1 }
+
+### 35. 공백뿐인 keyword → 조건 없음 → 200 · 26권 (초기 25권 + 12 등록 + 34 등록 − 28 삭제)
+GET {{baseUrl}}/books?keyword=%20%20
+
+### 36. 태그 이름은 전체 일치(대소문자 구분) → 200 · 0권 (SF 태그만 있고 sf 태그는 없음)
+GET {{baseUrl}}/books?tag=sf
+
+### 37. tags에 공백뿐인 이름 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "빈 태그 확인", "author": "테스트", "tags": ["개발", "   "] }
+
+### 38. noteId가 1 이상의 정수가 아님(0) → 400 (validateId)
+DELETE {{baseUrl}}/books/26/notes/0

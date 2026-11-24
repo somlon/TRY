@@ -1,67 +1,116 @@
 # 과제 3 — 독서 기록 REST API 서버 (데이터베이스 연동)
 
-> 이 README는 **제출물의 일부(20%)** 입니다. 모든 항목을 본인의 언어로 작성해 주세요.
-> 코드를 복사만 하고 이해하지 못하면 이 문서를 작성하기 어렵습니다.
-
 - 이름:
 - 학번:
 
----
+과제 2 독서 기록 REST API 서버의 저장 위치를 JSON 파일에서 PostgreSQL 데이터베이스로 바꾸고, 독서 노트(1:N)와 태그(N:M) 기능을 Express 5 + TypeScript + Prisma로 구현했다.
 
 ## 1. 실행 방법
-.env 작성부터 서버 실행까지의 명령을 순서대로 적어 주세요.
 
 ```bash
-# 예)
-# .env.example을 복사하여 .env를 만들고 DATABASE_URL 입력 (과제용 Supabase 프로젝트)
-npm install
-npx prisma migrate dev --name init
-npx prisma generate
-npm run reset   # 테이블 초기화 + 초기 데이터 입력
-npm run check   # 타입 검사 (오류 0개가 목표)
-npm run dev     # http://localhost:3000
+# .env.example을 복사하여 .env를 만들고 DATABASE_URL에 과제용 Supabase 연결 문자열(Session pooler) 입력
+cp .env.example .env
+npm install                          # 모델 없는 Prisma Client 생성(postinstall)
+npx prisma migrate dev --name init   # TODO 1 작성 후 — prisma/migrations 생성 · 적용
+npx prisma generate                  # 작성한 모델로 Client 다시 생성
+npm run reset                        # 테이블 초기화 + 초기 데이터(도서 25 · 태그 6 · 노트 6)
+npm run check                        # 타입 검사 (오류 0개)
+npm run dev                          # http://localhost:3000
 ```
 
 ## 2. 구조 · 동작 설명
-각 질문에 대해 **어느 파일의 어느 코드가 그렇게 동작하게 하는지** 근거를 들어 설명하세요.
 
-**Q1.** `GET /books?status=done&tag=소설&keyword=김` 요청에서 `bookStore.findAll`이 만드는 where 객체를 적고, where의 각 조건(status, 제목 · 저자 검색, 태그)이 어떤 도서를 고르는지 설명하시오. include의 `tags`와 `_count`가 응답의 어느 값이 되는지도 포함하시오.
+**Q1.** `GET /books?status=done&tag=소설&keyword=김`에서 `bookStore.findAll`이 만드는 where 객체와 각 조건의 의미, include의 `tags` · `_count`가 응답의 어느 값이 되는가?
 
--
+`bookController.list`가 query를 검사해 `{ status: 'done', keyword: '김', tag: '소설' }`을 넘기면, `bookStore.findAll`이 지정된 조건만 빈 객체 `where`에 추가하여 다음 객체를 만든다.
 
-**Q2.** 이미 등록된 도서와 같은 제목 + 저자로 `POST /books`를 요청하면 409가 응답된다. schema.prisma의 어느 코드에서 시작하여 어느 모듈이 409를 결정하기까지의 과정을 설명하시오. 과제 2처럼 Store에서 같은 도서가 있는지 먼저 조회하지 않아도 되는 이유도 포함하시오.
+```ts
+{
+  status: 'done',
+  OR: [
+    { title:  { contains: '김', mode: 'insensitive' } },
+    { author: { contains: '김', mode: 'insensitive' } },
+  ],
+  tags: { some: { name: '소설' } },
+}
+```
 
--
+| 조건 | 고르는 도서 |
+|---|---|
+| `status: 'done'` | 읽기 상태가 완독인 도서 |
+| `OR` + `contains` · `mode: 'insensitive'` | 제목 또는 저자에 '김'이 들어 있는 도서 (영문 대소문자 구분 없음) |
+| `tags: { some: { name: '소설' } }` | 연결된 태그 중 하나라도 이름이 '소설'인 도서 |
 
-**Q3.** `DELETE /books/5`(노트 2개, 태그 '개발')를 실행하면 notes 테이블과 _BookToTag 테이블의 관련 행은 함께 삭제되지만 tags 테이블의 '개발' 행은 남는다. 그 이유를 schema.prisma와 migration.sql의 코드로 설명하시오. Note 모델의 onDelete를 생략하면 이 요청의 응답이 어떻게 되는지도 포함하시오.
+where의 속성 세 개는 모두 만족해야 하므로(AND) 결과는 `살인자의 기억법 · 우리가 빛의 속도로 갈 수 없다면 · 불편한 편의점` 3권이다(id 오름차순, `orderBy: { id: 'asc' }`).
+`include`의 `tags: true`는 도서마다 `"tags": [{ "id": 1, "name": "소설" }]` 배열이 되고, `_count: { select: { notes: true } }`는 `"_count": { "notes": 0 }`처럼 노트 수가 된다.
 
--
+**Q2.** 같은 제목 + 저자로 `POST /books`를 요청하면 409가 되는 과정은? 과제 2처럼 Store에서 먼저 조회하지 않아도 되는 이유는?
 
-## 3. 겪은 오류와 해결 (최소 2건)
-과제 코드를 작성하고 실행하면서 만난 오류의 메시지 **원문**과 원인, 해결 과정을 적으세요.
+1. `schema.prisma`의 Book 모델 `@@unique([title, author])`로 migrate dev가 `migration.sql`에 `CREATE UNIQUE INDEX "books_title_author_key" ON "books"("title", "author");`를 만든다.
+2. `bookController.create`는 입력 검증만 하고 중복 검사 없이 `await store.create(input)`을 호출한다.
+3. `bookStore.create`의 `prisma.book.create`가 INSERT를 보내면 데이터베이스가 고유 인덱스 위반으로 거부하고, Prisma가 code `P2002`인 `PrismaClientKnownRequestError`를 던진다. `bookStore.create`는 이 오류를 잡지 않는다.
+4. Express 5는 async 핸들러에서 거부된 Promise를 에러 핸들러로 넘기므로, 오류가 `app.ts` 맨 마지막의 `errorHandler`로 간다.
+5. `errorHandlers.ts`에서 `err instanceof Prisma.PrismaClientKnownRequestError`이고 `err.code === 'P2002'`이면 `409 { message, code: 'P2002' }`로 응답한다(requests.http 16).
 
-- 인정하는 오류: `npm run check` 컴파일 오류, `npx prisma` 명령(migrate dev, generate, reset) 오류,
-  서버 실행 오류, requests.http의 응답이 기대 결과와 다른 경우
-- 인정하지 않는 오류: AI 도구 자체의 실행 환경 오류(네트워크 연결, 권한, 사용량 제한 등),
-  Supabase 가입 · 로그인 문제
+먼저 조회하지 않아도 되는 이유는 데이터베이스가 INSERT를 실행할 때 고유 제약을 직접 검사하기 때문이다. 과제 2의 `exists` → `create` 방식은 데이터 요청이 2번 필요하고, 두 요청이 동시에 `exists`를 통과하면 둘 다 저장될 수 있다. 고유 제약은 저장하는 순간에 검사하므로 이런 경우에도 중복을 막는다.
 
-- 오류 1 — 메시지 / 원인 / 해결:
-- 오류 2 — 메시지 / 원인 / 해결:
+**Q3.** `DELETE /books/5`(노트 2개, 태그 '개발')에서 notes와 _BookToTag의 행은 삭제되고 tags의 '개발'은 남는 이유는? Note의 onDelete를 생략하면?
+
+| 테이블 | 결과 | 근거 코드 |
+|---|---|---|
+| notes | 도서 5의 노트 2개 삭제 | `schema.prisma` Note의 `@relation(fields: [bookId], references: [id], onDelete: Cascade)` → `migration.sql`의 `FOREIGN KEY ("book_id") REFERENCES "books"("id") ON DELETE CASCADE` |
+| _BookToTag | 도서 5의 연결 행 삭제 | 암시적 N:M(`tags Tag[]` · `books Book[]`)으로 migrate dev가 만든 `"_BookToTag_A_fkey" FOREIGN KEY ("A") REFERENCES "books"("id") ON DELETE CASCADE` |
+| tags | '개발' 행 유지 | tags 테이블에는 books를 가리키는 외래키가 없다. 외래키는 중간 테이블에만 있으므로 도서를 지워도 태그 행은 그대로이고, 다른 도서와의 연결도 유지된다(requests.http 30에서 개발 8) |
+
+Note의 `onDelete`를 생략하면 필수 관계의 기본값인 Restrict가 되어 `migration.sql`에 `ON DELETE RESTRICT`가 생성된다. 노트가 있는 도서 5를 삭제하면 데이터베이스가 거부하고 Prisma가 `P2003`을 던진다. `bookStore.remove`는 `P2025`만 `false`로 바꾸고 그 밖의 오류는 다시 던지므로, `errorHandler`가 P2002가 아닌 Prisma 오류로 처리해 `500 {"message":"데이터베이스 요청 오류","code":"P2003"}`으로 응답한다. 도서 5는 삭제되지 않는다(onDelete를 뺀 복사본으로 직접 실행해 확인).
+
+## 3. 오류 기록
+
+### 오류 1
+
+```
+src/stores/bookStore.ts(8,23): error TS2305: Module '"../generated/prisma/client.js"' has no exported member 'Book'.
+src/stores/bookStore.ts(29,17): error TS2339: Property 'book' does not exist on type 'PrismaClient<never, GlobalOmitConfig | undefined, DefaultArgs>'.
+src/stores/noteStore.ts(6,15): error TS2305: Module '"../generated/prisma/client.js"' has no exported member 'Note'.
+```
+
+- 원인: `npm install` 직후, TODO 1(schema.prisma)을 작성하기 전에 `npm run check`를 실행했다. 모델이 없는 상태로 Client가 생성되어 `Book` · `Note` 타입과 `prisma.book`이 없었다.
+- 해결: Book · Note · Tag 모델을 작성하고 `npx prisma migrate dev --name init` → `npx prisma generate`를 실행하자 오류가 사라졌다.
+
+### 오류 2
+
+```
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///…/exp/src/generated/prisma/client.js'
+}
+
+An error occurred while running the seed command:
+Error: Command failed with exit code 1: tsx prisma/seed.ts
+```
+
+- 원인: Q3 확인용으로 onDelete를 뺀 복사본(`exp`)을 만들고 `migrate dev` 다음에 바로 `npx prisma db seed`를 실행했다. Prisma 7의 `migrate dev`는 Client를 생성하지 않으므로 `src/generated/prisma`가 없었고, `seed.ts` → `db.ts`의 `import … from './generated/prisma/client.js'`가 실패했다. (경로 일부는 `…`로 줄임)
+- 해결: `npx prisma generate`를 실행한 뒤 다시 seed하자 `초기 데이터 입력 완료: 도서 25권`이 출력됐다. 과제 실행 순서가 migrate dev → generate → reset인 이유를 확인했다.
 
 ## 4. AI 활용 보고
-AI(ChatGPT · Claude 등)를 사용했다면 **어느 부분에 어떻게** 사용했는지 정직하게 적으세요.
-사용하지 않았다면 "사용하지 않음"으로 적으세요.
-(사용은 허용됩니다. 다만 사용 후에도 코드를 이해하고 설명할 수 있어야 합니다.)
 
--
+Claude Code(웹 컨테이너)를 다음 부분에 사용했다.
+
+1. 준비: 스타터 압축을 풀어 브랜치에 올리고, 과제 PDF · 강의록 1~12강 · 과제 2 코드를 기준으로 작업 규칙과 요구사항 체크리스트를 정리했다.
+2. 코드 구현: TODO 1~16과 지정 주석 3곳을 작성했다. 강의록과 과제 2 코드에 나온 방식만 사용했고, 강의록에 없는 `res.headersSent` 검사는 확인을 받은 뒤 사용했다.
+3. 검증: 컨테이너의 PostgreSQL에서 migrate dev · seed 후 `requests.http` 1~32의 상태 코드 · 권수 · id · 필드 값을 기대 결과와 비교했다(32개 일치). `[time]` 로그, 삭제 시 노트 · 연결 행 삭제, onDelete를 뺀 경우의 500(P2003)도 따로 확인했다.
+4. 추가 시나리오: `requests.http` 33~38번(경계값 · 규칙 위반)을 작성하고 실행했다.
+5. README: 초안을 작성했다.
+6. GitHub: 변경을 커밋 · 푸시하고 PR을 만들었다.
 
 ## 5. 테스트 시나리오 설명
-`requests.http`의 "추가 시나리오" 영역에 **제공되지 않은 요청을 3개 이상** 작성하고,
-각 요청이 무엇을 확인하는지와 기대 결과(상태 코드 · 응답 내용)를 적으세요.
-경계값(최솟값 · 범위 밖 값)이나 규칙 위반 요청을 포함해야 합니다.
+
+`requests.http` 33~38번. `npm run reset` 후 1번부터 순서대로 실행한다.
 
 | 번호 | 요청 | 확인하는 규칙 | 기대 결과 |
 |---|---|---|---|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| 33 | `POST /books` 완독 · `rating: 6` | 별점 최댓값 초과 (1~5 정수만) | 400 |
+| 34 | `POST /books` 완독 · `rating: 1` (33과 같은 제목 · 저자) | 별점 최솟값 허용, tags 생략 시 빈 배열 | 201 · status done · rating 1 · tags [] |
+| 35 | `GET /books?keyword=%20%20` | 공백뿐인 keyword는 조건 없음 | 200 · 26권 |
+| 36 | `GET /books?tag=sf` | 태그 이름은 전체 일치 (대소문자 구분) | 200 · 0권 |
+| 37 | `POST /books` `tags: ["개발", "   "]` | 공백뿐인 태그 이름 | 400 |
+| 38 | `DELETE /books/26/notes/0` | noteId 경계값 (1 이상의 정수만) | 400 |

@@ -45,11 +45,17 @@
 - `npm run reset`은 아직 성공 확인 못 함: Prisma가 AI 에이전트 실행을 감지해 `migrate reset --force`를 막음.
   사용자의 명시적 동의 문장을 `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`에 넣어야 실행됨 → 사용자에게 동의 요청 중
 
+- requests.http 추가 시나리오 33~38 작성, 1~32 다음 순서로 실행해 기대 결과와 일치 확인
+  - 34의 id는 28(16번 409 요청이 시퀀스 값 27을 사용) → 시나리오 기대 결과에 id를 적지 않음
+- Q3 실험: onDelete를 뺀 복사본 + 별도 DB(`reading_log_exp`, 실험 후 삭제)에서 `ON DELETE RESTRICT` 생성,
+  `DELETE /books/5` → `500 {"message":"데이터베이스 요청 오류","code":"P2003"}`, 도서 5 유지 확인
+- README 전 항목 작성(이름 · 학번 비워 둠)
+
 ### 다음 할 일
-1. 사용자 동의를 받으면 로컬 DB에서 `npm run reset` 성공 확인 → requests.http 1~32 재확인
-2. requests.http 추가 시나리오 3개 이상(경계값 · 규칙 위반) 작성 · 실행
-3. README 전 항목 작성(실행 방법, Q1~Q3, 오류 기록 2건 이상, AI 활용 보고, 테스트 시나리오 표)
-4. (사용자) 이름 · 학번 기입, 과제용 Supabase 프로젝트에서 최종 확인
+1. 사용자 동의를 받으면 로컬 DB에서 `npm run reset` 성공 확인 → requests.http 1~38 재확인
+2. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
+3. (사용자) 과제용 Supabase 프로젝트에서 `.env` 작성 → `npm run reset` → `npm run dev`로 최종 확인
+4. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
 
 ### 결정 사항 · 주의점
 - errorHandler의 `res.headersSent` 사용은 사용자가 과제 3에도 승인함(CLAUDE.md 5-4)
@@ -65,4 +71,14 @@
   src/stores/bookStore.ts(29,17): error TS2339: Property 'book' does not exist on type 'PrismaClient<never, GlobalOmitConfig | undefined, DefaultArgs>'.
   src/stores/noteStore.ts(6,15): error TS2305: Module '"../generated/prisma/client.js"' has no exported member 'Note'.
   ```
-  원인: schema.prisma에 모델이 없어 generate가 Book · Note 타입과 `prisma.book`을 만들지 않음.
+  원인: schema.prisma에 모델이 없어 generate가 Book · Note 타입과 `prisma.book`을 만들지 않음. (README 오류 1)
+- 오류 B — Q3 실험용 복사본에서 `migrate dev` 직후 `npx prisma db seed` (generate 전):
+  ```
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///tmp/claude-0/-home-user-TRY/7deea27b-251d-591f-9ed8-f448239ea0bb/scratchpad/exp/src/generated/prisma/client.js'
+  }
+
+  An error occurred while running the seed command:
+  Error: Command failed with exit code 1: tsx prisma/seed.ts
+  ```
+  원인: Prisma 7의 migrate dev는 Client를 생성하지 않음 → `src/generated/prisma` 없음. 해결: `npx prisma generate` 후 seed 성공. (README 오류 2)
