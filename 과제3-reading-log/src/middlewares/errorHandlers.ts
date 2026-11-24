@@ -19,6 +19,31 @@ export const notFound: RequestHandler = (req, res) => {
 //   - 그 밖의 오류는 500으로 응답한다.
 //   - 응답 형식은 다른 오류 응답과 같은 { message } JSON으로 통일한다.
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  // 응답을 이미 보내기 시작했으면 더 쓸 수 없으므로 Express 기본 처리기에 넘김
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
   console.error(err);
-  res.status(500).json({ message: 'TODO 2: errorHandler를 구현하세요' });
+
+  // express.json()이 본문을 해석하지 못하면 SyntaxError가 전달됨 → 클라이언트 잘못(400)
+  if (err instanceof SyntaxError) {
+    res.status(400).json({ message: '잘못된 JSON 본문' });
+    return;
+  }
+
+  // Prisma 오류 — 응답에는 오류 코드만 전달 (메시지 원문에는 테이블 · 질의 등 내부 정보가 있음)
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    // P2002 — 고유 제약 위반(같은 제목 + 저자 등) → 409
+    if (err.code === 'P2002') {
+      res.status(409).json({ message: '이미 등록된 데이터', code: err.code });
+      return;
+    }
+    res.status(500).json({ message: '데이터베이스 요청 오류', code: err.code });
+    return;
+  }
+
+  const message = err instanceof Error ? err.message : '알 수 없는 오류';
+  res.status(500).json({ message });
 };

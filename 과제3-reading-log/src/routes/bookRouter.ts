@@ -19,6 +19,17 @@ const router = Router();
 //       POST   /books/:id/notes            → note.create
 //       DELETE /books/:id/notes/:noteId    → note.remove
 //   - 경로 매개변수(:id, :noteId)가 있는 endpoint에는 validateId를 적용한다.
+router.use(requestTimer);
 
+// 도서
+router.get('/', book.list);
+router.get('/:id', validateId, book.getById);
+router.post('/', book.create);
+router.patch('/:id', validateId, book.update);
+router.delete('/:id', validateId, book.remove);
+
+// 독서 노트 — 특정 도서(:id)에 속한 노트
+router.post('/:id/notes', validateId, note.create);
+router.delete('/:id/notes/:noteId', validateId, note.remove);
 
 export default router;

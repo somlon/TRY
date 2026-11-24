@@ -9,5 +9,8 @@ import { prisma } from '../db.js';
 //   - 태그마다 그 태그가 붙은 도서 수(_count.books)를 포함한다.
 //     예) [{ "id": 1, "name": "소설", "_count": { "books": 15 } }, …]
 export function findAll() {
-  throw new Error('TODO 10: findAll을 구현하세요');
+  return prisma.tag.findMany({
+    orderBy: { id: 'asc' },
+    include: { _count: { select: { books: true } } },   // 태그마다 도서 수
+  });
 }

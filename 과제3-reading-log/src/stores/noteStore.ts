@@ -15,12 +15,27 @@ import type { NewNote } from '../types.js';
 export async function create(
   bookId: number, input: NewNote,
 ): Promise<Note | null> {
-  throw new Error('TODO 8: create를 구현하세요');
+  try {
+    return await prisma.note.create({
+      data: { bookId, page: input.page, content: input.content },
+    });
+  } catch (err) {
+    // [설명] bookId에 해당하는 도서가 없으면 외래키 제약 위반으로 P2003이 발생하므로, 도서를 먼저 조회하지 않고 이 오류만 null로 바꿔 Controller가 404로 응답하게 한다.
+    if (isPrismaError(err, 'P2003')) return null;
+    throw err;   // 그 밖의 오류는 에러 핸들러로
+  }
 }
 
 // TODO 9: bookId 도서에 속한 id 노트를 삭제하라. 삭제했으면 true, 대상이 없으면(P2025) false.
 //   - 다른 도서의 경로로 보낸 요청(예: DELETE /books/1/notes/7)으로는 삭제되지 않아야 한다.
 //   - [설명] 주석 한 줄로 where에 id와 bookId를 함께 지정하는 이유를 남겨라.
 export async function remove(bookId: number, id: number): Promise<boolean> {
-  throw new Error('TODO 9: remove를 구현하세요');
+  try {
+    // [설명] id만 지정하면 다른 도서의 경로(DELETE /books/1/notes/7)로도 노트가 삭제되므로, bookId를 함께 지정해 경로의 도서에 속한 노트만 삭제한다.
+    await prisma.note.delete({ where: { id, bookId } });
+    return true;
+  } catch (err) {
+    if (isPrismaError(err, 'P2025')) return false;   // 노트가 없거나 다른 도서의 노트
+    throw err;
+  }
 }

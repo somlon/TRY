@@ -46,3 +46,37 @@ datasource db {
 //     npm run reset                        → 초기 데이터 입력
 //   주의: 열을 추가 · 변경할 때는 반드시 이 파일을 수정한 뒤 migrate dev로 반영한다.
 //         Supabase Table Editor에서 열을 직접 추가 · 수정하지 않는다.
+
+model Book {
+  id        Int      @id @default(autoincrement())
+  title     String
+  author    String
+  status    String
+  rating    Int?
+  memo      String
+  createdAt DateTime @default(now()) @map("created_at")
+  notes     Note[]   // 1:N — 이 도서의 독서 노트 목록
+  tags      Tag[]    // N:M — 이 도서의 태그 목록
+
+  @@unique([title, author])   // 같은 제목 + 저자는 한 번만 저장
+  @@map("books")
+}
+
+model Note {
+  id        Int      @id @default(autoincrement())
+  page      Int
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  bookId    Int      @map("book_id")   // 외래키
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  books Book[] // N:M — 이 태그가 붙은 도서 목록
+
+  @@map("tags")
+}
