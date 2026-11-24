@@ -1,0 +1,151 @@
+@baseUrl = http://localhost:3000
+
+### 실행 전 npm run reset으로 초기 데이터(도서 25권, 태그 6개, 노트 6개)를 입력하고
+### 1번부터 순서대로 실행 — 12번 이후의 id(26, 7 등)는 순서대로 실행한 경우의 값
+
+### ── 조회 ──────────────────────────────────────────
+### 1. 전체 목록 → 200 · 25권 (도서마다 tags 배열, _count.notes 포함)
+GET {{baseUrl}}/books
+
+### 2. 상태 조건 → 200 · 9권 (모두 want)
+GET {{baseUrl}}/books?status=want
+
+### 3. 상태 + 검색어 → 200 · 3권 (살인자의 기억법 · 우리가 빛의 속도로 갈 수 없다면 · 불편한 편의점)
+GET {{baseUrl}}/books?status=done&keyword=김
+
+### 4. 검색어 (영문 대소문자 구분 없음) → 200 · 1권 (Clean Code)
+GET {{baseUrl}}/books?keyword=code
+
+### 5. 태그 조건 → 200 · 3권 (작별인사 · 우리가 빛의 속도로 갈 수 없다면 · 지구 끝의 온실)
+GET {{baseUrl}}/books?tag=SF
+
+### 6. 상태 + 태그 → 200 · 5권 (흰 · 지구 끝의 온실 · 김약국의 딸들 · 달러구트 꿈 백화점 · 데미안)
+GET {{baseUrl}}/books?status=want&tag=소설
+
+### 7. 잘못된 status → 400
+GET {{baseUrl}}/books?status=finish
+
+### 8. 상세 조회 → 200 · notes 2개(등록순) · tags 2개(소설, 역사)
+GET {{baseUrl}}/books/1
+
+### 9. 잘못된 id → 400
+GET {{baseUrl}}/books/abc
+
+### 10. 없는 id → 404
+GET {{baseUrl}}/books/99
+
+### 11. 태그 목록 → 200 · 6개 (소설 15 · 역사 4 · 개발 8 · SF 3 · 고전 2 · 과학 1)
+GET {{baseUrl}}/tags
+
+### ── 등록 · 수정 ────────────────────────────────────
+### 12. 태그 포함 등록 → 201 · id 26 · status want · rating null · memo ""
+###     tags: 개발(기존 태그 3번에 연결) · 데이터베이스(새 태그 7번 생성 후 연결)
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "자바 ORM 표준 JPA 프로그래밍", "author": "김영한",
+  "tags": ["개발", " 데이터베이스 ", "개발"] }
+
+### 13. 필수값 누락 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "저자 없는 책" }
+
+### 14. 완독이 아닌 도서에 별점 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "새 책", "author": "홍길동", "rating": 4 }
+
+### 15. tags가 배열이 아님 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "새 책", "author": "홍길동", "tags": "개발" }
+
+### 16. 이미 등록된 도서 (같은 제목 + 저자) → 409
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "소년이 온다", "author": "한강" }
+
+### 17. 완독으로 변경 + 별점 → 200 · status done · rating 5
+PATCH {{baseUrl}}/books/26
+Content-Type: application/json
+
+{ "status": "done", "rating": 5 }
+
+### 18. 읽는 중인 도서에 별점 → 400
+PATCH {{baseUrl}}/books/3
+Content-Type: application/json
+
+{ "rating": 4 }
+
+### 19. 완독 → 읽는 중 → 200 · rating null
+PATCH {{baseUrl}}/books/1
+Content-Type: application/json
+
+{ "status": "reading" }
+
+### 20. 없는 도서 수정 → 404
+PATCH {{baseUrl}}/books/99
+Content-Type: application/json
+
+{ "memo": "없음" }
+
+### ── 독서 노트 ──────────────────────────────────────
+### 21. 노트 등록 → 201 · id 7 · bookId 26
+POST {{baseUrl}}/books/26/notes
+Content-Type: application/json
+
+{ "page": 15, "content": "엔티티와 테이블의 매핑" }
+
+### 22. page가 1 이상의 정수가 아님 → 400
+POST {{baseUrl}}/books/26/notes
+Content-Type: application/json
+
+{ "page": 0, "content": "잘못된 페이지" }
+
+### 23. 없는 도서에 노트 등록 → 404
+POST {{baseUrl}}/books/99/notes
+Content-Type: application/json
+
+{ "page": 1, "content": "도서 없음" }
+
+### 24. 상세 조회 → 200 · notes 1개 · tags 2개(개발, 데이터베이스)
+GET {{baseUrl}}/books/26
+
+### 25. 다른 도서의 경로로 노트 삭제 → 404
+DELETE {{baseUrl}}/books/1/notes/7
+
+### 26. 노트 삭제 → 204
+DELETE {{baseUrl}}/books/26/notes/7
+
+### 27. 같은 노트 다시 삭제 → 404
+DELETE {{baseUrl}}/books/26/notes/7
+
+### ── 삭제 ──────────────────────────────────────────
+### 28. 노트가 있는 도서 삭제 → 204 (Clean Code — 노트 2개와 태그 연결 행도 함께 삭제)
+DELETE {{baseUrl}}/books/5
+
+### 29. 삭제한 도서 조회 → 404
+GET {{baseUrl}}/books/5
+
+### 30. 태그 목록 → 200 · 7개 (개발 8 — 26 등록 +1, 5 삭제 −1 · 데이터베이스 1)
+GET {{baseUrl}}/tags
+
+### ── 오류 처리 ──────────────────────────────────────
+### 31. 잘못된 JSON 본문 → 400
+POST {{baseUrl}}/books
+Content-Type: application/json
+
+{ "title": "따옴표 누락, }
+
+### 32. 등록되지 않은 경로 → 404
+GET {{baseUrl}}/users
+
+### ── 추가 시나리오 (직접 작성) ──────────────────────
+### 제공되지 않은 요청을 3개 이상 작성하고, 각 요청 위에
+### "### 번호. 확인 내용 → 기대 결과" 형식으로 기대 결과를 적는다.
+### README 5번 표와 내용을 일치시킨다.

@@ -1,0 +1,48 @@
+// 이름 / 학번
+
+// Prisma Client 생성 설정 (제공 — 수정하지 않음)
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// 데이터베이스 종류 — 연결 주소는 prisma.config.ts (제공 — 수정하지 않음)
+datasource db {
+  provider = "postgresql"
+}
+
+// TODO 1: Book · Note · Tag 모델을 작성하라.
+//   모델 이름, 필드 이름, 타입은 아래와 같이 작성한다.
+//   (seed.ts와 응답 JSON이 이 이름을 사용하므로 다르게 쓰면 npm run reset이 실패하고 응답 형식이 달라진다)
+//
+//   Book — 테이블 이름 books
+//     id        Int       기본키, 자동 증가
+//     title     String
+//     author    String
+//     status    String    'want' · 'reading' · 'done' (값 검사는 Controller가 담당)
+//     rating    Int?      1~5, 평가하지 않았으면 null
+//     memo      String
+//     createdAt DateTime  등록 시각 자동 기록, 열 이름 created_at
+//     notes     관계 필드 — 이 도서의 독서 노트 목록 (1:N)
+//     tags      관계 필드 — 이 도서의 태그 목록 (N:M)
+//     같은 title + author 조합은 한 번만 저장 가능 → @@unique([title, author])
+//
+//   Note — 테이블 이름 notes
+//     id        Int       기본키, 자동 증가
+//     page      Int
+//     content   String
+//     createdAt DateTime  등록 시각 자동 기록, 열 이름 created_at
+//     bookId    Int       외래키, 열 이름 book_id
+//     book      관계 필드 — 노트가 속한 도서. 도서를 삭제하면 노트도 함께 삭제(onDelete: Cascade)
+//
+//   Tag — 테이블 이름 tags
+//     id        Int       기본키, 자동 증가
+//     name      String    같은 이름은 한 번만 저장 가능 (@unique)
+//     books     관계 필드 — 이 태그가 붙은 도서 목록 (N:M)
+//
+//   작성 후 실행 순서
+//     npx prisma migrate dev --name init   → prisma/migrations 폴더 생성
+//     npx prisma generate                  → Prisma Client 다시 생성
+//     npm run reset                        → 초기 데이터 입력
+//   주의: 열을 추가 · 변경할 때는 반드시 이 파일을 수정한 뒤 migrate dev로 반영한다.
+//         Supabase Table Editor에서 열을 직접 추가 · 수정하지 않는다.
