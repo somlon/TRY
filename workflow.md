@@ -81,11 +81,13 @@
      - 마지막 `npm run reset` 성공(`Database reset successful`, `초기 데이터 입력 완료: 도서 25권`) → Supabase는 초기 상태
 - README: 오류 2를 Supabase P1001(오류 C)로, 기존 오류 2(generate 전 seed)는 오류 3으로. AI 활용 보고에 Supabase 검증 · 연결 안내 반영
 
+  9. 사용자 스크린샷으로 Supabase Table Editor 확인: `_BookToTag` · `_prisma_migrations` · `books` · `notes` · `tags`,
+     books는 id 1~25(마지막 25 사피엔스) — 테스트로 추가한 26 · 28이 없어 마지막 reset으로 초기 상태임을 확인. **Supabase 연결 완료**
+
 ### 다음 할 일
-1. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
-2. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
-3. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
-4. 코드나 schema를 바꾸면 요청 파일 2번째 줄(시각)만 바꿔 push해 Supabase에서 다시 확인
+1. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
+2. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
+3. 코드나 schema를 바꾸면 요청 파일 2번째 줄(시각)만 바꿔 push해 Supabase에서 다시 확인
 4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
 5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
