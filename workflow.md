@@ -83,6 +83,11 @@
 
   9. 사용자 스크린샷으로 Supabase Table Editor 확인: `_BookToTag` · `_prisma_migrations` · `books` · `notes` · `tags`,
      books는 id 1~25(마지막 25 사피엔스) — 테스트로 추가한 26 · 28이 없어 마지막 reset으로 초기 상태임을 확인. **Supabase 연결 완료**
+  10. 사용자 요청: 과제 PDF 기준 전수 점검
+     - PDF 17쪽 다시 읽음. 정적 점검 41/41(제공 파일 · 블록 무변경, schema · migration 규칙, [설명] 3곳, any 0, 역할 분리, export 시그니처)
+     - README · requests.http 점검 15/15
+     - `.github/scripts/audit_pdf.py`(165개 항목) 로컬 새 DB에서 165/165. DB Cascade · `[time]` 형식 · P1001 → 500 `{message, code}` 확인
+     - 워크플로에 PDF 점검 단계 추가(1~38 → 서버 종료 · reset → 서버 재시작 → audit → reset) 후 Supabase 실행 요청
 
 ### 다음 할 일
 1. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기

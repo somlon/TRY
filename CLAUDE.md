@@ -17,6 +17,7 @@
 | `.github/workflows/supabase-check.yml` | 과제용 Supabase DB 검증 워크플로. reset → 서버 실행 → requests.http 1~38 확인 → reset (규칙 3) |
 | `.github/supabase-check-request.txt` | 위 워크플로의 실행 요청 파일. 1번째 줄 = 사용자의 reset 동의 문장, 2번째 줄 = 요청 시각. 바꾸어 push하면 실행됨 |
 | `.github/scripts/check_requests.py` | requests.http 1~38을 순서대로 실행해 기대 결과와 비교하는 점검 스크립트(불일치 시 종료 코드 1) |
+| `.github/scripts/audit_pdf.py` | 과제 PDF 요구사항 점검 스크립트(165개 항목, reset 직후 상태에서 실행, 불일치 시 종료 코드 1) |
 
 - 과제 2 코드와 자료는 브랜치 `claude/epic-bardeen-9yrzon`에 있다. 도서 필드 · 검증 규칙이 과제 2와 같으므로 참고한다.
 - 과제 PDF 원본은 저장소에 없다. 규칙 5-2가 그 내용을 옮긴 것이다. 원문 확인이 필요하면 사용자에게 업로드를 요청한다.

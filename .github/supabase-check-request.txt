@@ -1,2 +1,2 @@
 과제용 Supabase 프로젝트에서 npm run reset을 여러 번 실행하는 것에 동의합니다
-요청: 2026-11-25 15:38:33 KST (Secret을 Session pooler로 수정 후 재실행)
+요청: 2026-11-25 19:14:27 KST (PDF 요구사항 점검 추가 후 실행)

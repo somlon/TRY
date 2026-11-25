@@ -1,5 +1,6 @@
 # 과제 3 Supabase 검증
 # 과제용 Supabase DB에 npm run reset을 적용하고, 서버를 실행해 requests.http 1~38을 기대 결과와 비교한다.
+# 이어서 다시 reset한 뒤 PDF 요구사항 점검(audit_pdf.py)을 실행하고, 마지막에 reset으로 초기 상태로 되돌린다.
 # Claude 웹 컨테이너는 프록시가 DB(TCP) 연결을 지원하지 않으므로 GitHub Actions에서 실행한다.
 #
 # 실행 방법 (사용자가 정함: 요청 파일 push)
@@ -98,6 +99,37 @@ jobs:
       - name: 서버 콘솔 로그
         if: always() && steps.first_reset.outcome == 'success'
         run: cat "$RUNNER_TEMP/server.log"
+
+      # ── PDF 요구사항 점검: 초기 상태에서 다시 시작 (reset 중 기존 DB 연결을 쓰지 않도록 서버를 다시 띄움)
+      - name: 서버 종료 후 npm run reset (PDF 점검 준비)
+        id: audit_reset
+        if: always() && steps.first_reset.outcome == 'success'
+        run: |
+          pkill -f "src/app.ts" || true
+          sleep 2
+          npm run reset
+
+      - name: 서버 다시 실행
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: |
+          npm run dev > "$RUNNER_TEMP/server-audit.log" 2>&1 &
+          for i in $(seq 1 60); do
+            grep -q '대기 중' "$RUNNER_TEMP/server-audit.log" && break
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/server-audit.log"
+
+      - name: PDF 요구사항 점검 (audit_pdf.py)
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: python3 -I ../.github/scripts/audit_pdf.py http://localhost:3000
+
+      - name: 서버 콘솔 로그 (PDF 점검)
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: |
+          echo "[time] 줄 수: $(grep -c '^\[time\]' "$RUNNER_TEMP/server-audit.log")"
+          echo "[time] 형식 불일치: $(grep '^\[time\]' "$RUNNER_TEMP/server-audit.log" | grep -vcE '^\[time\] (GET|POST|PATCH|DELETE|PUT) /\S* [0-9]{3} [0-9]+ms$' || true)"
+          echo "/users 로그: $(grep -c '\[time\] GET /users' "$RUNNER_TEMP/server-audit.log" || true)"
+          grep -E '^\[time\] (GET /books\?tag=SF|POST /books/99/notes) ' "$RUNNER_TEMP/server-audit.log" || true
 
       - name: 초기 상태로 되돌리기 (npm run reset)
         if: always() && steps.first_reset.outcome == 'success'
