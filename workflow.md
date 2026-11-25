@@ -51,11 +51,21 @@
   `DELETE /books/5` → `500 {"message":"데이터베이스 요청 오류","code":"P2003"}`, 도서 5 유지 확인
 - README 전 항목 작성(이름 · 학번 비워 둠)
 
+#### 2026-11-25 (같은 세션, 컨테이너 재시작 후 이어서)
+- 사용자 지시: **Supabase DB를 반드시 사용**. 컨테이너 프록시는 raw-TCP DB를 지원하지 않음(`/root/.ccr/README.md`)
+  → 사용자가 실행 위치로 **GitHub Actions**를 선택
+- `.github/workflows/supabase-check.yml`(수동 실행 전용) · `.github/scripts/check_requests.py`(1~38, 불일치 시 종료 코드 1) 추가
+  - 점검 스크립트는 새 로컬 DB(`migrate deploy` + `db seed`, 확인 후 삭제)에서 38/38 통과, 종료 코드 0
+- CLAUDE.md 규칙 3을 Supabase(GitHub Actions) 기준으로 수정
+
 ### 다음 할 일
-1. 사용자 동의를 받으면 로컬 DB에서 `npm run reset` 성공 확인 → requests.http 1~38 재확인
-2. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
-3. (사용자) 과제용 Supabase 프로젝트에서 `.env` 작성 → `npm run reset` → `npm run dev`로 최종 확인
-4. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
+1. (사용자) 과제용 Supabase 프로젝트 활성 상태 확인 → Connect → Session pooler 연결 문자열을
+   GitHub repository secret `DATABASE_URL`로 등록 (채팅으로 받지 않음)
+2. (사용자) Supabase에서 `npm run reset` 실행에 동의하는 문장을 채팅으로 전달
+3. 동의 문장을 `reset_consent`에 넣어 `supabase-check.yml` 실행 → 로그에서 reset 성공 · 38/38 확인
+4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
+5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
+6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
 
 ### 결정 사항 · 주의점
 - errorHandler의 `res.headersSent` 사용은 사용자가 과제 3에도 승인함(CLAUDE.md 5-4)

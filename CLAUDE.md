@@ -14,6 +14,8 @@
 | `.claude/settings.json` | 강의록 확인 훅(규칙 7) · 압축 알림 훅(규칙 2) · 사용량 한도 자동 재개(규칙 4) |
 | `.claude/lectures.json` | 강의록 1~12강 목록(번호 · 제목 · 형식 · SHA-256). 원본 파일은 없음(규칙 7) |
 | `.claude/scripts/lectures.sh` | 강의록 원본 확인(`check`) · 경로(`path`) · 텍스트 추출(`text`) 도구 |
+| `.github/workflows/supabase-check.yml` | 과제용 Supabase DB 검증 워크플로(수동 실행). reset → 서버 실행 → requests.http 1~38 확인 → reset (규칙 3) |
+| `.github/scripts/check_requests.py` | requests.http 1~38을 순서대로 실행해 기대 결과와 비교하는 점검 스크립트(불일치 시 종료 코드 1) |
 
 - 과제 2 코드와 자료는 브랜치 `claude/epic-bardeen-9yrzon`에 있다. 도서 필드 · 검증 규칙이 과제 2와 같으므로 참고한다.
 - 과제 PDF 원본은 저장소에 없다. 규칙 5-2가 그 내용을 옮긴 것이다. 원문 확인이 필요하면 사용자에게 업로드를 요청한다.
@@ -63,8 +65,18 @@
 
 - 설치 · 타입 검사 · 마이그레이션 · 서버 실행 · 요청 테스트는 모두 이 클라우드 컨테이너에서 한다.
   사용자 PC 폴더 연결(`request_computer_folder`)은 쓰지 않고, 사용자에게 로컬에서 명령을 실행해 달라고 하지 않는다.
-- **데이터베이스**: 컨테이너는 외부로 HTTPS 프록시만 통과하므로 Supabase(PostgreSQL 프로토콜)에 접속할 수 없다.
-  개발 · 검증은 컨테이너에 설치된 로컬 PostgreSQL 16으로 한다. Supabase도 PostgreSQL이므로 migration과 코드는 그대로 쓸 수 있다.
+- **데이터베이스 — 과제는 반드시 Supabase DB를 쓴다(사용자 지시).**
+  컨테이너의 프록시는 raw-TCP 데이터베이스 연결을 지원하지 않는다(`/root/.ccr/README.md`, 우회 금지). 그래서 컨테이너에서는 Supabase에 접속할 수 없다.
+  - **Supabase 검증 = GitHub Actions** `.github/workflows/supabase-check.yml` (사용자가 정한 방식). 컴퓨터를 꺼도 GitHub 서버에서 실행된다.
+    - 연결 문자열: repository secret `DATABASE_URL`(Supabase → Connect → Session pooler). 사용자가 GitHub 설정에서 등록한다. Claude는 값을 보지 않는다.
+    - 실행: `mcp__github__actions_run_trigger`(`run_workflow`, `workflow_id: supabase-check.yml`, `ref`: 현재 브랜치, `inputs.reset_consent`: 사용자의 동의 문장).
+    - 결과: `mcp__github__actions_list`(`list_workflow_runs` · `list_workflow_jobs`)와 `mcp__github__get_job_logs`로 확인한다.
+    - `npm run reset`은 DB의 모든 테이블을 지운다. 사용자가 채팅으로 준 동의 문장을 그대로 `reset_consent`에 넣고, 동의 없이는 실행하지 않는다.
+    - 동의는 사용자가 지정한 범위(과제용 프로젝트, 횟수 등) 안에서만 쓴다. 범위가 불분명하면 다시 묻는다.
+  - **빠른 개발 확인 = 로컬 PostgreSQL 16** (컨테이너에 설치됨). Supabase도 PostgreSQL이므로 migration과 코드는 그대로 동작한다.
+    단, 제출 전 최종 확인은 반드시 Supabase 워크플로로 한다.
+    로컬에서도 Prisma가 AI 실행을 감지해 `migrate reset`을 막으므로, reset이 필요하면 사용자의 동의 문장을 `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION`에 넣는다.
+    동의가 없을 때는 빈 DB를 새로 만들어 `npx prisma migrate deploy` → `npx prisma db seed`로 같은 초기 상태를 만든다.
   ```bash
   pg_ctlcluster 16 main start                                          # 컨테이너를 새로 받았으면 매번
   su postgres -c "psql -c \"ALTER USER postgres PASSWORD 'postgres';\""  # 처음 한 번
@@ -84,10 +96,10 @@
   npm run check        # 타입 오류 0개 확인
   npm run dev          # 백그라운드로 실행, 포트는 .env의 PORT
   ```
-  요청 테스트는 `npm run reset` 직후 `requests.http`의 시나리오를 1번부터 `curl`로 재현해 기대 결과와 비교한다.
+  요청 테스트는 초기 상태(reset 직후)에서 `python3 -I .github/scripts/check_requests.py http://localhost:<PORT>`로 1~38을 순서대로 확인한다.
 - 컨테이너는 일시적이다. 결과물은 커밋 · 푸시한다. `node_modules`, `src/generated`, `dist`, `.env`는 커밋하지 않는다
   (`.env`에는 Supabase 비밀번호가 들어가고, 제출하면 감점된다).
-- Supabase 연결 문자열 · 비밀번호를 채팅으로 받지 않는다. Supabase에서의 최종 확인은 사용자 작업으로 workflow.md에 남긴다.
+- Supabase 연결 문자열 · 비밀번호를 채팅으로 받지 않는다. 사용자가 채팅에 붙여 넣으면 사용하지 말고 Secret 등록과 비밀번호 변경을 권한다.
 - 사용자 지시 없이 이 저장소 외의 외부 서비스에 파일을 올리지 않는다.
 
 ## 규칙 4. 토큰 만료 시 초기화 후 자동으로 이어서 작업

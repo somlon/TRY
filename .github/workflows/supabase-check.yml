@@ -1,0 +1,96 @@
+# 과제 3 Supabase 검증
+# 과제용 Supabase DB에 npm run reset을 적용하고, 서버를 실행해 requests.http 1~38을 기대 결과와 비교한다.
+# Claude 웹 컨테이너는 프록시가 DB(TCP) 연결을 지원하지 않으므로 GitHub Actions에서 실행한다.
+#
+# - DB에 접근하는 것은 수동 실행(workflow_dispatch)뿐이다.
+#   push 실행은 이 워크플로를 GitHub에 등록하기 위한 것이며, 작업을 건너뛴다.
+# - 연결 문자열은 repository secret DATABASE_URL에서 읽는다. .env는 실행 중에만 만들고 커밋 · 업로드하지 않는다.
+# - npm run reset은 DB의 모든 테이블을 지우므로 사용자의 동의 문장(reset_consent)이 있어야 실행한다.
+name: 과제3 Supabase 검증
+
+on:
+  workflow_dispatch:
+    inputs:
+      reset_consent:
+        description: '과제용 Supabase DB에서 npm run reset 실행에 동의하는 사용자 문장'
+        required: false
+        type: string
+  push:
+    paths:
+      - '.github/workflows/supabase-check.yml'
+
+permissions:
+  contents: read
+
+# 같은 DB를 쓰는 실행이 겹치지 않도록 한 번에 하나만
+concurrency:
+  group: supabase-db
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: 과제3-reading-log
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 입력 확인 (Secret · reset 동의)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESET_CONSENT: ${{ inputs.reset_consent }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::repository secret DATABASE_URL이 없습니다 (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+          if [ -z "$RESET_CONSENT" ]; then
+            echo "::error::reset_consent(사용자 동의 문장)가 없어 DB 작업을 하지 않습니다"
+            exit 1
+          fi
+
+      - name: .env 작성 (실행 중에만 존재)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: printf 'PORT=3000\nDATABASE_URL=%s\n' "$DATABASE_URL" > .env
+
+      - name: 의존성 설치 (postinstall이 prisma generate 실행)
+        run: npm ci
+
+      - name: 타입 검사
+        run: npm run check
+
+      - name: npm run reset (테이블 초기화 + 초기 데이터)
+        id: first_reset
+        env:
+          PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: ${{ inputs.reset_consent }}
+        run: npm run reset
+
+      - name: 서버 실행
+        run: |
+          npm run dev > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 60); do
+            grep -q '대기 중' "$RUNNER_TEMP/server.log" && break
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/server.log"
+
+      - name: requests.http 1~38 확인
+        run: python3 -I ../.github/scripts/check_requests.py http://localhost:3000
+
+      - name: 서버 콘솔 로그
+        if: always() && steps.first_reset.outcome == 'success'
+        run: cat "$RUNNER_TEMP/server.log"
+
+      - name: 초기 상태로 되돌리기 (npm run reset)
+        if: always() && steps.first_reset.outcome == 'success'
+        env:
+          PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION: ${{ inputs.reset_consent }}
+        run: npm run reset
