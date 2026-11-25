@@ -88,9 +88,6 @@
 1. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 2. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
 3. 코드나 schema를 바꾸면 요청 파일 2번째 줄(시각)만 바꿔 push해 Supabase에서 다시 확인
-4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
-5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
-6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
 
 ### 결정 사항 · 주의점
 - errorHandler의 `res.headersSent` 사용은 사용자가 과제 3에도 승인함(CLAUDE.md 5-4)
