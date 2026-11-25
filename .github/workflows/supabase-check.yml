@@ -1,0 +1,136 @@
+# 과제 3 Supabase 검증
+# 과제용 Supabase DB에 npm run reset을 적용하고, 서버를 실행해 requests.http 1~38을 기대 결과와 비교한다.
+# 이어서 다시 reset한 뒤 PDF 요구사항 점검(audit_pdf.py)을 실행하고, 마지막에 reset으로 초기 상태로 되돌린다.
+# Claude 웹 컨테이너는 프록시가 DB(TCP) 연결을 지원하지 않으므로 GitHub Actions에서 실행한다.
+#
+# 실행 방법 (사용자가 정함: 요청 파일 push)
+#   .github/supabase-check-request.txt 를 바꾸어 push하면 실행된다.
+#     1번째 줄: reset에 대한 사용자의 동의 문장 (사용자가 채팅으로 준 문장 그대로)
+#     2번째 줄: 요청 시각 — 같은 동의로 다시 실행할 때 이 줄만 바꾼다
+#   기본 브랜치(main)에서는 실행하지 않는다 (PR 병합으로 요청 파일이 들어와도 reset하지 않도록).
+#   Claude GitHub 앱은 workflow_dispatch를 호출할 권한이 없다(403). workflow_dispatch는 사용자가 직접 실행할 때만 쓴다.
+#
+# - 연결 문자열은 repository secret DATABASE_URL에서 읽는다. .env는 실행 중에만 만들고 커밋 · 업로드하지 않는다.
+# - npm run reset은 DB의 모든 테이블을 지우므로 동의 문장이 없으면 DB 작업 전에 멈춘다.
+name: 과제3 Supabase 검증
+
+on:
+  push:
+    paths:
+      - '.github/supabase-check-request.txt'
+  workflow_dispatch:
+    inputs:
+      reset_consent:
+        description: '과제용 Supabase DB에서 npm run reset 실행에 동의하는 사용자 문장'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# 같은 DB를 쓰는 실행이 겹치지 않도록 한 번에 하나만
+concurrency:
+  group: supabase-db
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.ref_name != github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: 과제3-reading-log
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 입력 확인 (Secret · reset 동의)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DISPATCH_CONSENT: ${{ inputs.reset_consent }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::repository secret DATABASE_URL이 없습니다 (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            consent="$(head -n 1 ../.github/supabase-check-request.txt 2>/dev/null | tr -d '\r"')"
+          else
+            consent="$(printf '%s' "$DISPATCH_CONSENT" | tr -d '\r\n"')"
+          fi
+          if [ -z "$consent" ]; then
+            echo "::error::reset 동의 문장이 없어 DB 작업을 하지 않습니다"
+            exit 1
+          fi
+          echo "동의 문장: $consent"
+          echo "PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=$consent" >> "$GITHUB_ENV"
+
+      - name: .env 작성 (실행 중에만 존재)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: printf 'PORT=3000\nDATABASE_URL=%s\n' "$DATABASE_URL" > .env
+
+      - name: 의존성 설치 (postinstall이 prisma generate 실행)
+        run: npm ci
+
+      - name: 타입 검사
+        run: npm run check
+
+      - name: npm run reset (테이블 초기화 + 초기 데이터)
+        id: first_reset
+        run: npm run reset
+
+      - name: 서버 실행
+        run: |
+          npm run dev > "$RUNNER_TEMP/server.log" 2>&1 &
+          for i in $(seq 1 60); do
+            grep -q '대기 중' "$RUNNER_TEMP/server.log" && break
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/server.log"
+
+      - name: requests.http 1~38 확인
+        run: python3 -I ../.github/scripts/check_requests.py http://localhost:3000
+
+      - name: 서버 콘솔 로그
+        if: always() && steps.first_reset.outcome == 'success'
+        run: cat "$RUNNER_TEMP/server.log"
+
+      # ── PDF 요구사항 점검: 초기 상태에서 다시 시작 (reset 중 기존 DB 연결을 쓰지 않도록 서버를 다시 띄움)
+      - name: 서버 종료 후 npm run reset (PDF 점검 준비)
+        id: audit_reset
+        if: always() && steps.first_reset.outcome == 'success'
+        run: |
+          pkill -f "src/app.ts" || true
+          sleep 2
+          npm run reset
+
+      - name: 서버 다시 실행
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: |
+          npm run dev > "$RUNNER_TEMP/server-audit.log" 2>&1 &
+          for i in $(seq 1 60); do
+            grep -q '대기 중' "$RUNNER_TEMP/server-audit.log" && break
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/server-audit.log"
+
+      - name: PDF 요구사항 점검 (audit_pdf.py)
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: python3 -I ../.github/scripts/audit_pdf.py http://localhost:3000
+
+      - name: 서버 콘솔 로그 (PDF 점검)
+        if: always() && steps.audit_reset.outcome == 'success'
+        run: |
+          echo "[time] 줄 수: $(grep -c '^\[time\]' "$RUNNER_TEMP/server-audit.log")"
+          echo "[time] 형식 불일치: $(grep '^\[time\]' "$RUNNER_TEMP/server-audit.log" | grep -vcE '^\[time\] (GET|POST|PATCH|DELETE|PUT) /\S* [0-9]{3} [0-9]+ms$' || true)"
+          echo "/users 로그: $(grep -c '\[time\] GET /users' "$RUNNER_TEMP/server-audit.log" || true)"
+          grep -E '^\[time\] (GET /books\?tag=SF|POST /books/99/notes) ' "$RUNNER_TEMP/server-audit.log" || true
+
+      - name: 초기 상태로 되돌리기 (npm run reset)
+        if: always() && steps.first_reset.outcome == 'success'
+        run: npm run reset
