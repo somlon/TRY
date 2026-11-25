@@ -66,10 +66,14 @@
   3. 사용자가 비밀번호를 넣어 연결 문자열 완성(채팅으로 받지 않음)
   4. repository secret `DATABASE_URL` 등록 확인(스크린샷)
 
+  5. 사용자 동의 문장(채팅 원문 그대로, 범위: 과제용 프로젝트 · 여러 번):
+     `과제용 Supabase 프로젝트에서 npm run reset을 여러 번 실행하는 것에 동의합니다`
+     → `.github/supabase-check-request.txt`에 적어 push(첫 실행 요청)
+
 ### 다음 할 일
-1. (사용자) Supabase에서 `npm run reset`을 실행하는 데 동의하는 문장을 채팅으로 전달 — 아직 받지 않음
-2. 동의 문장을 `.github/supabase-check-request.txt` 1번째 줄에, 요청 시각을 2번째 줄에 적어 push → 실행 로그에서 reset 성공 · 38/38 확인
+1. 실행 로그에서 reset 성공 · requests.http 38/38 · 마지막 reset 확인
    (연결 실패면 로그의 오류로 원인 안내 — 비밀번호 퍼센트 인코딩, 프로젝트 일시 중지 등)
+2. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
 4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
 5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
