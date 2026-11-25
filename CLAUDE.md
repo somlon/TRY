@@ -240,6 +240,8 @@
 - Store 함수는 Promise를 그대로 반환하면 async를 붙이지 않는다. await가 필요한 update · remove만 async.
 - update · delete는 대상이 없으면 P2025. Store에서 try/catch로 P2025만 null · false로 바꾸고 그 밖은 `throw err`. try 안에서는 `return await`.
 - Controller에서 먼저 조회한 뒤 update · delete하지 않는다(요청 2번, 사이에 삭제되면 500).
+  예외(과제 우선): PATCH는 TODO 13이 ③ 대상 도서 404를 ④ 수정 후 상태 판단보다 먼저 하도록 정했으므로 `store.findById`로 먼저 조회하고,
+  ⑤에서 `store.update`가 null이면(조회 뒤 삭제된 경우) 404로 응답한다.
 - `exactOptionalPropertyTypes` 때문에 선택 속성에 undefined를 넣지 않는다. 빈 객체를 만들고 `if (x !== undefined) obj.x = x`로 전달된 필드만 넣는다.
 - 부분 일치는 `contains`, 대소문자 무시는 `mode: 'insensitive'`. 정렬은 `orderBy`.
 - Prisma 오류 응답에는 code만 전달한다(메시지에 테이블 · 질의 등 내부 정보가 있음). 상세는 `console.error`로 서버 콘솔에만.

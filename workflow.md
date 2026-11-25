@@ -88,6 +88,9 @@
      - README · requests.http 점검 15/15
      - `.github/scripts/audit_pdf.py`(165개 항목) 로컬 새 DB에서 165/165. DB Cascade · `[time]` 형식 · P1001 → 500 `{message, code}` 확인
      - 워크플로에 PDF 점검 단계 추가(1~38 → 서버 종료 · reset → 서버 재시작 → audit → reset) 후 Supabase 실행 요청
+     - **실행 #4(run 45593110329, `93b59cd`) 전 단계 성공**: Supabase에서 reset 3회 성공, requests.http 38/38,
+       PDF 점검 **165/165**, `[time]` 135줄 · 형식 불일치 0 · /users 로그 0, 마지막 reset 후 초기 상태(도서 25권)
+     - CLAUDE.md 5-3 11강 "먼저 조회하지 않음"에 PATCH 예외(TODO 13 ③ → ④ 순서) 명시
 
 ### 다음 할 일
 1. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
