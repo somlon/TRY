@@ -36,7 +36,7 @@ export function findAll(options: ListOptions) {
     orderBy: { id: 'asc' },
     include: {
       tags: true,
-      // [설명] 목록에는 노트 수만 필요하므로 include의 notes로 노트 내용 전체를 가져오지 않고 _count로 개수만 조회해 응답과 조회량을 줄인다.
+      // [설명] 목록에는 노트 수만 응답하므로, 노트 내용 전체를 가져오는 include의 notes 대신 _count로 개수만 조회해 조회량과 응답 크기를 줄인다.
       _count: { select: { notes: true } },
     },
   });

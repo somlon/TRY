@@ -20,7 +20,7 @@ export async function create(
       data: { bookId, page: input.page, content: input.content },
     });
   } catch (err) {
-    // [설명] bookId에 해당하는 도서가 없으면 외래키 제약 위반으로 P2003이 발생하므로, 도서를 먼저 조회하지 않고 이 오류만 null로 바꿔 Controller가 404로 응답하게 한다.
+    // [설명] bookId의 도서가 없으면 외래키 제약 위반으로 P2003이 발생하므로, 도서를 먼저 조회하지 않고 이 오류만 null로 바꿔 Controller가 404로 응답하게 한다.
     if (isPrismaError(err, 'P2003')) return null;
     throw err;   // 그 밖의 오류는 에러 핸들러로
   }
