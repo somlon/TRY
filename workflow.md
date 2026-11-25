@@ -58,11 +58,18 @@
   - 점검 스크립트는 새 로컬 DB(`migrate deploy` + `db seed`, 확인 후 삭제)에서 38/38 통과, 종료 코드 0
 - CLAUDE.md 규칙 3을 Supabase(GitHub Actions) 기준으로 수정
 
+- workflow_dispatch 실행 시도 → 403 `Resource not accessible by integration`(Claude GitHub 앱에 Actions 실행 권한 없음, DB 영향 없음)
+  → 사용자가 방식 A 선택: `.github/supabase-check-request.txt` push로 실행(기본 브랜치에서는 실행 안 함)
+- 사용자와 단계별 확인(스크린샷)으로 진행:
+  1. 과제용 프로젝트 = 수업에 쓰지 않은 기존 프로젝트(서울 리전). 일시 중지 → 다시 시작, Table Editor `public`에 테이블 없음 확인
+  2. Connect → Direct Connection string → Session pooler · URI 확인(host `aws-0-ap-northeast-2.pooler.supabase.com:5432`)
+  3. 사용자가 비밀번호를 넣어 연결 문자열 완성(채팅으로 받지 않음)
+  4. repository secret `DATABASE_URL` 등록 확인(스크린샷)
+
 ### 다음 할 일
-1. (사용자) 과제용 Supabase 프로젝트 활성 상태 확인 → Connect → Session pooler 연결 문자열을
-   GitHub repository secret `DATABASE_URL`로 등록 (채팅으로 받지 않음)
-2. (사용자) Supabase에서 `npm run reset` 실행에 동의하는 문장을 채팅으로 전달
-3. 동의 문장을 `reset_consent`에 넣어 `supabase-check.yml` 실행 → 로그에서 reset 성공 · 38/38 확인
+1. (사용자) Supabase에서 `npm run reset`을 실행하는 데 동의하는 문장을 채팅으로 전달 — 아직 받지 않음
+2. 동의 문장을 `.github/supabase-check-request.txt` 1번째 줄에, 요청 시각을 2번째 줄에 적어 push → 실행 로그에서 reset 성공 · 38/38 확인
+   (연결 실패면 로그의 오류로 원인 안내 — 비밀번호 퍼센트 인코딩, 프로젝트 일시 중지 등)
 4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
 5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)

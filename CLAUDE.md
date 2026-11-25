@@ -14,7 +14,8 @@
 | `.claude/settings.json` | 강의록 확인 훅(규칙 7) · 압축 알림 훅(규칙 2) · 사용량 한도 자동 재개(규칙 4) |
 | `.claude/lectures.json` | 강의록 1~12강 목록(번호 · 제목 · 형식 · SHA-256). 원본 파일은 없음(규칙 7) |
 | `.claude/scripts/lectures.sh` | 강의록 원본 확인(`check`) · 경로(`path`) · 텍스트 추출(`text`) 도구 |
-| `.github/workflows/supabase-check.yml` | 과제용 Supabase DB 검증 워크플로(수동 실행). reset → 서버 실행 → requests.http 1~38 확인 → reset (규칙 3) |
+| `.github/workflows/supabase-check.yml` | 과제용 Supabase DB 검증 워크플로. reset → 서버 실행 → requests.http 1~38 확인 → reset (규칙 3) |
+| `.github/supabase-check-request.txt` | 위 워크플로의 실행 요청 파일. 1번째 줄 = 사용자의 reset 동의 문장, 2번째 줄 = 요청 시각. 바꾸어 push하면 실행됨 |
 | `.github/scripts/check_requests.py` | requests.http 1~38을 순서대로 실행해 기대 결과와 비교하는 점검 스크립트(불일치 시 종료 코드 1) |
 
 - 과제 2 코드와 자료는 브랜치 `claude/epic-bardeen-9yrzon`에 있다. 도서 필드 · 검증 규칙이 과제 2와 같으므로 참고한다.
@@ -69,9 +70,11 @@
   컨테이너의 프록시는 raw-TCP 데이터베이스 연결을 지원하지 않는다(`/root/.ccr/README.md`, 우회 금지). 그래서 컨테이너에서는 Supabase에 접속할 수 없다.
   - **Supabase 검증 = GitHub Actions** `.github/workflows/supabase-check.yml` (사용자가 정한 방식). 컴퓨터를 꺼도 GitHub 서버에서 실행된다.
     - 연결 문자열: repository secret `DATABASE_URL`(Supabase → Connect → Session pooler). 사용자가 GitHub 설정에서 등록한다. Claude는 값을 보지 않는다.
-    - 실행: `mcp__github__actions_run_trigger`(`run_workflow`, `workflow_id: supabase-check.yml`, `ref`: 현재 브랜치, `inputs.reset_consent`: 사용자의 동의 문장).
+    - 실행(사용자가 정한 방식 A): `.github/supabase-check-request.txt`의 1번째 줄에 사용자의 동의 문장, 2번째 줄에 요청 시각을 적어 커밋 · push한다.
+      같은 동의로 다시 실행할 때는 2번째 줄(시각)만 바꾼다. 기본 브랜치에서는 실행되지 않는다.
+      Claude GitHub 앱은 `actions_run_trigger`(workflow_dispatch) 권한이 없다(403 Resource not accessible by integration).
     - 결과: `mcp__github__actions_list`(`list_workflow_runs` · `list_workflow_jobs`)와 `mcp__github__get_job_logs`로 확인한다.
-    - `npm run reset`은 DB의 모든 테이블을 지운다. 사용자가 채팅으로 준 동의 문장을 그대로 `reset_consent`에 넣고, 동의 없이는 실행하지 않는다.
+    - `npm run reset`은 DB의 모든 테이블을 지운다. 사용자가 채팅으로 준 동의 문장을 그대로 요청 파일에 적고, 동의 없이는 요청 파일을 만들거나 바꾸지 않는다.
     - 동의는 사용자가 지정한 범위(과제용 프로젝트, 횟수 등) 안에서만 쓴다. 범위가 불분명하면 다시 묻는다.
   - **빠른 개발 확인 = 로컬 PostgreSQL 16** (컨테이너에 설치됨). Supabase도 PostgreSQL이므로 migration과 코드는 그대로 동작한다.
     단, 제출 전 최종 확인은 반드시 Supabase 워크플로로 한다.
