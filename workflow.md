@@ -70,10 +70,15 @@
      `과제용 Supabase 프로젝트에서 npm run reset을 여러 번 실행하는 것에 동의합니다`
      → `.github/supabase-check-request.txt`에 적어 push(첫 실행 요청)
 
+  6. 실행 #2(run 45561533852, `c4ae15c`): 입력 확인 · npm ci · generate · `npm run check` 통과,
+     첫 `npm run reset`에서 P1001(오류 C) — Secret이 Session pooler가 아닌 Direct connection 문자열. DB 변경 없음.
+     → 사용자에게 Secret을 Session pooler 문자열로 수정하도록 안내
+
 ### 다음 할 일
-1. 실행 로그에서 reset 성공 · requests.http 38/38 · 마지막 reset 확인
-   (연결 실패면 로그의 오류로 원인 안내 — 비밀번호 퍼센트 인코딩, 프로젝트 일시 중지 등)
-2. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
+1. (사용자) Secret `DATABASE_URL`을 Session pooler 문자열로 수정 → 스크린샷(Last updated) 확인
+2. 요청 파일 2번째 줄(시각)만 바꿔 push → 재실행 로그에서 reset 성공 · requests.http 38/38 · 마지막 reset 확인
+3. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
+4. README 갱신: 오류 기록(오류 C를 오류 2로 쓸지 검토), 실행 방법, AI 활용 보고(Supabase 검증)
 4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
 5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
@@ -103,3 +108,12 @@
   Error: Command failed with exit code 1: tsx prisma/seed.ts
   ```
   원인: Prisma 7의 migrate dev는 Client를 생성하지 않음 → `src/generated/prisma` 없음. 해결: `npx prisma generate` 후 seed 성공. (README 오류 2)
+- 오류 C — Supabase에서 `npm run reset` (GitHub Actions run 45561533852, 2026-11-25):
+  ```
+  Datasource "db": PostgreSQL database "postgres", schema "public" at "db.chixzifpdbfiiqenelhn.supabase.co:5432"
+  Error: P1001: Can't reach database server at `db.chixzifpdbfiiqenelhn.supabase.co:5432`
+
+  Please make sure your database server is running at `db.chixzifpdbfiiqenelhn.supabase.co:5432`.
+  ```
+  원인: DATABASE_URL에 Session pooler가 아닌 Direct connection 문자열(`db.<ref>.supabase.co`, IPv6 필요 — 11강 14쪽)을 넣음.
+  해결: Session pooler 문자열(`postgres.<ref>@aws-0-ap-northeast-2.pooler.supabase.com:5432`)로 교체 — 재실행 결과로 확인 예정
