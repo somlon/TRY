@@ -80,6 +80,16 @@ src/stores/noteStore.ts(6,15): error TS2305: Module '"../generated/prisma/client
 ### 오류 2
 
 ```
+Datasource "db": PostgreSQL database "postgres", schema "public" at "db.chixzifpdbfiiqenelhn.supabase.co:5432"
+Error: P1001: Can't reach database server at `db.chixzifpdbfiiqenelhn.supabase.co:5432`
+```
+
+- 원인: 과제용 Supabase DB에 `npm run reset`을 처음 실행했을 때(GitHub Actions), `DATABASE_URL`에 Session pooler가 아니라 Direct connection 연결 문자열(`db.<프로젝트ID>.supabase.co`)을 넣었다. Direct connection은 IPv6 네트워크가 필요해서(11강) DB 서버에 연결하지 못했다.
+- 해결: Supabase Connect 화면에서 Connection Method를 Session pooler로 바꿔 연결 문자열(`postgres.<프로젝트ID>@aws-0-ap-northeast-2.pooler.supabase.com:5432`)을 다시 넣자 `Database reset successful`과 `초기 데이터 입력 완료: 도서 25권`이 출력됐다.
+
+### 오류 3
+
+```
   code: 'ERR_MODULE_NOT_FOUND',
   url: 'file:///…/exp/src/generated/prisma/client.js'
 }
@@ -97,10 +107,11 @@ Claude Code(웹 컨테이너)를 다음 부분에 사용했다.
 
 1. 준비: 스타터 압축을 풀어 브랜치에 올리고, 과제 PDF · 강의록 1~12강 · 과제 2 코드를 기준으로 작업 규칙과 요구사항 체크리스트를 정리했다.
 2. 코드 구현: TODO 1~16과 지정 주석 3곳을 작성했다. 강의록과 과제 2 코드에 나온 방식만 사용했고, 강의록에 없는 `res.headersSent` 검사는 확인을 받은 뒤 사용했다.
-3. 검증: 컨테이너의 PostgreSQL에서 migrate dev · seed 후 `requests.http` 1~32의 상태 코드 · 권수 · id · 필드 값을 기대 결과와 비교했다(32개 일치). `[time]` 로그, 삭제 시 노트 · 연결 행 삭제, onDelete를 뺀 경우의 500(P2003)도 따로 확인했다.
-4. 추가 시나리오: `requests.http` 33~38번(경계값 · 규칙 위반)을 작성하고 실행했다.
-5. README: 초안을 작성했다.
-6. GitHub: 변경을 커밋 · 푸시하고 PR을 만들었다.
+3. 검증: 개발 중에는 Claude 웹 컨테이너의 PostgreSQL로 확인했다. 컨테이너에서는 Supabase에 접속할 수 없어서, 최종 확인은 저장소의 GitHub Actions 워크플로(`.github/workflows/supabase-check.yml`)로 했다. 과제용 Supabase DB에 `npm run reset` → 서버 실행 → `requests.http` 1~38 → `npm run reset` 순서로 실행해 상태 코드 · 권수 · id · 필드 값이 모두 기대 결과와 일치했다(38개). `[time]` 로그, 삭제 시 노트 · 연결 행 삭제, onDelete를 뺀 경우의 500(P2003)도 따로 확인했다.
+4. Supabase 연결: 과제용 프로젝트 확인, Session pooler 연결 문자열, GitHub Secret 등록을 단계별로 안내받아 직접 설정했다. 연결 문자열과 비밀번호는 AI에 전달하지 않았다.
+5. 추가 시나리오: `requests.http` 33~38번(경계값 · 규칙 위반)을 작성하고 실행했다.
+6. README: 초안을 작성했다.
+7. GitHub: 변경을 커밋 · 푸시하고 PR을 만들었다.
 
 ## 5. 테스트 시나리오 설명
 

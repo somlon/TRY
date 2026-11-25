@@ -74,11 +74,18 @@
      첫 `npm run reset`에서 P1001(오류 C) — Secret이 Session pooler가 아닌 Direct connection 문자열. DB 변경 없음.
      → 사용자에게 Secret을 Session pooler 문자열로 수정하도록 안내
 
+  7. 사용자가 Secret을 Session pooler 문자열로 수정(스크린샷 확인) → 요청 파일 2번째 줄만 바꿔 재실행
+  8. **실행 #3(run 45562123424, `e9cf174`) 전 단계 성공** — Supabase(`aws-0-ap-northeast-2.pooler.supabase.com:5432`)에서
+     - 첫 `npm run reset` 성공(migration `20261124150759_init` 적용 + seed 도서 25권)
+     - `npm run check` 통과, requests.http **38/38 일치**, `[time]` 로그 /books · /tags에 기록
+     - 마지막 `npm run reset` 성공(`Database reset successful`, `초기 데이터 입력 완료: 도서 25권`) → Supabase는 초기 상태
+- README: 오류 2를 Supabase P1001(오류 C)로, 기존 오류 2(generate 전 seed)는 오류 3으로. AI 활용 보고에 Supabase 검증 · 연결 안내 반영
+
 ### 다음 할 일
-1. (사용자) Secret `DATABASE_URL`을 Session pooler 문자열로 수정 → 스크린샷(Last updated) 확인
-2. 요청 파일 2번째 줄(시각)만 바꿔 push → 재실행 로그에서 reset 성공 · requests.http 38/38 · 마지막 reset 확인
-3. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
-4. README 갱신: 오류 기록(오류 C를 오류 2로 쓸지 검토), 실행 방법, AI 활용 보고(Supabase 검증)
+1. (사용자) Supabase Table Editor에서 books · notes · tags · _BookToTag 테이블과 초기 데이터 확인(스크린샷)
+2. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
+3. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
+4. 코드나 schema를 바꾸면 요청 파일 2번째 줄(시각)만 바꿔 push해 Supabase에서 다시 확인
 4. 결과에 맞춰 README(실행 방법 · AI 활용 보고) 갱신, Supabase에서 만난 오류가 있으면 원문 기록
 5. (사용자) README 이름 · 학번과 소스 파일 상단 `// 이름 / 학번` 기입, README를 읽고 본인 언어로 다듬기
 6. (사용자) 제출: node_modules · src/generated · .env를 뺀 `과제3-reading-log/` 압축(prisma/migrations 포함)
